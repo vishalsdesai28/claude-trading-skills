@@ -380,43 +380,66 @@ def fetch_historical_prices_for_hv(symbol, api_key, days=90):
 
 
 def get_current_stock_price(symbol, api_key):
-    """Fetch current stock price from FMP API"""
-    url = f"https://financialmodelingprep.com/api/v3/quote/{symbol}"
+    """Fetch current stock price from FMP API (stable, with v3 fallback)."""
+    # stable: /quote?symbol=SYM ; v3 fallback (legacy keys): /quote/SYM
+    endpoints = [
+        ("https://financialmodelingprep.com/stable/quote", True),
+        ("https://financialmodelingprep.com/api/v3/quote", False),
+    ]
+    for base_url, is_stable in endpoints:
+        try:
+            if is_stable:
+                response = requests.get(
+                    base_url, headers={"apikey": api_key}, params={"symbol": symbol}, timeout=30
+                )
+            else:
+                response = requests.get(
+                    f"{base_url}/{symbol}", headers={"apikey": api_key}, timeout=30
+                )
+            if response.status_code != 200:
+                continue
+            data = response.json()
+            if data and len(data) > 0 and data[0].get("price") is not None:
+                return data[0]["price"]
+        except Exception:  # nosec B112 - intentional fallback to next FMP endpoint
+            continue
 
-    try:
-        response = requests.get(url, headers={"apikey": api_key}, timeout=30)
-        response.raise_for_status()
-        data = response.json()
-
-        if data and len(data) > 0:
-            return data[0]["price"]
-        return None
-
-    except Exception as e:
-        print(f"Error fetching current price for {symbol}: {e}")
-        return None
+    print(f"Error fetching current price for {symbol}: all endpoints failed")
+    return None
 
 
 def get_dividend_yield(symbol, api_key):
-    """Fetch dividend yield from FMP API"""
-    url = f"https://financialmodelingprep.com/api/v3/profile/{symbol}"
+    """Fetch dividend yield from FMP API (stable, with v3 fallback)."""
+    # stable: /profile?symbol=SYM ; v3 fallback (legacy keys): /profile/SYM
+    endpoints = [
+        ("https://financialmodelingprep.com/stable/profile", True),
+        ("https://financialmodelingprep.com/api/v3/profile", False),
+    ]
+    for base_url, is_stable in endpoints:
+        try:
+            if is_stable:
+                response = requests.get(
+                    base_url, headers={"apikey": api_key}, params={"symbol": symbol}, timeout=30
+                )
+            else:
+                response = requests.get(
+                    f"{base_url}/{symbol}", headers={"apikey": api_key}, timeout=30
+                )
+            if response.status_code != 200:
+                continue
+            data = response.json()
+            if data and len(data) > 0:
+                # /stable/profile renamed lastDiv -> lastDividend; accept either.
+                last_div = data[0].get("lastDividend")
+                if last_div is None:
+                    last_div = data[0].get("lastDiv", 0)
+                last_div = last_div or 0
+                price = data[0].get("price", 1) or 1
+                return (last_div / price) if price > 0 else 0
+        except Exception:  # nosec B112 - intentional fallback to next FMP endpoint
+            continue
 
-    try:
-        response = requests.get(url, headers={"apikey": api_key}, timeout=30)
-        response.raise_for_status()
-        data = response.json()
-
-        if data and len(data) > 0:
-            # Last annual dividend / current price
-            last_div = data[0].get("lastDiv", 0)
-            price = data[0].get("price", 1)
-            div_yield = (last_div / price) if price > 0 else 0
-            return div_yield
-
-        return 0
-
-    except Exception:
-        return 0
+    return 0
 
 
 # =============================================================================
