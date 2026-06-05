@@ -90,7 +90,7 @@ def fetch_stock_list(api_key: str, sector: str | None = None) -> list[dict]:
 
 # --- FMP endpoint fallback: stable (new users) -> v3 (legacy users) ---
 _FMP_HIST_ENDPOINTS = [
-    ("https://financialmodelingprep.com/stable/historical-price-full", True),
+    ("https://financialmodelingprep.com/stable/historical-price-eod/full", True),
     ("https://financialmodelingprep.com/api/v3/historical-price-full", False),
 ]
 _endpoint_failures: dict[str, int] = {}

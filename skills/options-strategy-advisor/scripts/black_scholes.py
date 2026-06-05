@@ -338,7 +338,7 @@ def fetch_historical_prices_for_hv(symbol, api_key, days=90):
     """
     # Try stable endpoint first, fall back to v3
     endpoints = [
-        ("https://financialmodelingprep.com/stable/historical-price-full", True),
+        ("https://financialmodelingprep.com/stable/historical-price-eod/full", True),
         ("https://financialmodelingprep.com/api/v3/historical-price-full", False),
     ]
     for base_url, is_stable in endpoints:
@@ -365,7 +365,8 @@ def fetch_historical_prices_for_hv(symbol, api_key, days=90):
             if historical:
                 historical = historical[:days]
                 historical = historical[::-1]  # Reverse to chronological order
-                return [item["adjClose"] for item in historical]
+                # stable shape compat: EOD endpoint exposes `close`, not `adjClose`
+                return [item.get("adjClose") or item["close"] for item in historical]
         except Exception:  # nosec B112 - intentional fallback to next FMP endpoint
             continue
 
