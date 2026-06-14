@@ -40,6 +40,17 @@ _PATH_WITH_SYMBOL = {
     "discounted-cash-flow": "/discounted-cash-flow",
 }
 
+# v3 path → /stable path for endpoints that carry NO path symbol and whose
+# /stable name differs from the v3 name. Explicit because the underscore
+# (v3-style) /stable name 404s for these; the hyphenated name is the live one
+# (verified 2026-06: /stable/sp500_constituent and /stable/earning_calendar
+# both 404, the hyphenated variants both 200). These override the
+# underscore-preserving best-effort fallthrough below.
+_PATH_RENAME_NO_SYMBOL = {
+    "sp500_constituent": "/sp500-constituent",
+    "earning_calendar": "/earnings-calendar",
+}
+
 
 def v3_to_stable(url: str, params: dict | None = None) -> tuple[str, dict]:
     """Rewrite a legacy FMP v3 URL to its ``/stable`` equivalent.
@@ -81,6 +92,11 @@ def v3_to_stable(url: str, params: dict | None = None) -> tuple[str, dict]:
             return _STABLE + stable_path, params
         if after == v3_path:
             return _STABLE + stable_path, params
+
+    # Explicit hyphenated renames for symbol-less endpoints whose underscore
+    # /stable form 404s (must come before the underscore-preserving fallthrough).
+    if after in _PATH_RENAME_NO_SYMBOL:
+        return _STABLE + _PATH_RENAME_NO_SYMBOL[after], params
 
     # Best-effort 1:1 swap; preserve underscore names (free-tier friendly).
     return _STABLE + "/" + after, params

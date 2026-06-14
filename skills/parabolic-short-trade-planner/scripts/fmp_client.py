@@ -353,6 +353,11 @@ class FMPClient:
         data = self._rate_limited_get(url, params)
         if isinstance(data, list) and data:
             profile = data[0]
+            # /stable/profile returns ``marketCap``; v3 returned ``mktCap``.
+            # Re-alias so consumers (e.g. screen_parabolic.py market-cap bounds)
+            # keep working against the legacy key.
+            if "mktCap" not in profile and "marketCap" in profile:
+                profile["mktCap"] = profile["marketCap"]
             self.cache[cache_key] = profile
             return profile
         return None

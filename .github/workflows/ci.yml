@@ -103,6 +103,13 @@ jobs:
           --cov-report=term-missing
           --cov-append
 
+      - name: Test parabolic-short-trade-planner
+        run: >
+          python -m pytest skills/parabolic-short-trade-planner/scripts/tests/ -v
+          --cov=skills/parabolic-short-trade-planner/scripts
+          --cov-report=term-missing
+          --cov-append
+
       - name: Test sector-analyst
         run: >
           python -m pytest skills/sector-analyst/scripts/tests/ -v
