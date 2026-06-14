@@ -96,6 +96,8 @@ def render_fmp_client(cfg) -> str:
     text = text.replace("@@CLASS_CONSTANTS@@\n", const_block + "\n")
 
     text = text.replace("@@EXTENSIONS@@\n", _render_extensions(cfg) + "\n")
+    # @@BATCH_DAYS@@ lives in the family_a_quote extension, so substitute after it.
+    text = text.replace("@@BATCH_DAYS@@", str(cfg.batch_days))
 
     if "@@" in text:
         leftover = next(tok for tok in text.split("@@")[1:2])

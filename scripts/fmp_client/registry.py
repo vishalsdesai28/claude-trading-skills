@@ -40,9 +40,18 @@ class SkillConfig:
     feature_lines: tuple[str, ...]  # extra "- ..." module-docstring feature bullets
     class_constants: tuple[tuple[str, str], ...]  # (name, literal) class attributes
     extensions: tuple[str, ...]  # extension module names appended to the FMPClient body
+    batch_days: int = 260  # get_batch_historical default `days` (family A only)
 
 
-# PR1a scope: family B only. Family A rows land in PR1b (same generator).
+_FAMILY_A_FEATURES = (
+    "- Batch quote support",
+    "- S&P 500 constituents fetching",
+)
+
+
+# Family B (budget) landed in PR1a; family A (quote) added in PR1b — same generator.
+# canslim-screener / macro-regime-detector / market-top-detector stay hand-written
+# (PR2 — they need the yfinance / fundamentals surface).
 SKILLS: dict[str, SkillConfig] = {
     "pead-screener": SkillConfig(
         skill="pead-screener",
@@ -87,5 +96,47 @@ SKILLS: dict[str, SkillConfig] = {
         feature_lines=_FAMILY_B_FEATURES,
         class_constants=(),
         extensions=("family_b_profiles",),
+    ),
+    "vcp-screener": SkillConfig(
+        skill="vcp-screener",
+        title="FMP API Client for VCP Screener",
+        family="A",
+        has_quote=True,
+        budget=False,
+        hist_days=365,
+        hist_return_list=False,
+        has_compat=True,
+        feature_lines=_FAMILY_A_FEATURES,
+        class_constants=(),
+        extensions=("sp500_constituents", "family_a_quote"),
+        batch_days=260,
+    ),
+    "parabolic-short-trade-planner": SkillConfig(
+        skill="parabolic-short-trade-planner",
+        title="FMP API Client for Parabolic Short Trade Planner",
+        family="A",
+        has_quote=True,
+        budget=False,
+        hist_days=365,
+        hist_return_list=False,
+        has_compat=True,
+        feature_lines=_FAMILY_A_FEATURES,
+        class_constants=(),
+        extensions=("sp500_constituents", "family_a_quote", "parabolic"),
+        batch_days=260,
+    ),
+    "ftd-detector": SkillConfig(
+        skill="ftd-detector",
+        title="FMP API Client for FTD Detector",
+        family="A",
+        has_quote=True,
+        budget=False,
+        hist_days=365,
+        hist_return_list=False,
+        has_compat=False,
+        feature_lines=("- Batch quote support",),
+        class_constants=(),
+        extensions=("family_a_quote", "ftd"),
+        batch_days=50,
     ),
 }

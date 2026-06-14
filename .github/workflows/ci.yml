@@ -287,7 +287,7 @@ jobs:
         run: python3 scripts/generate_fmp_client.py --check
 
       - name: FMP skill package drift check
-        run: python3 scripts/package_skills.py --check --skill pead-screener --skill earnings-trade-analyzer --skill ibd-distribution-day-monitor
+        run: python3 scripts/package_skills.py --check --skill pead-screener --skill earnings-trade-analyzer --skill ibd-distribution-day-monitor --skill vcp-screener --skill parabolic-short-trade-planner --skill ftd-detector
 
       # Note: the validator + generator unit tests already run under the
       # 'Test repo-level scripts' step in the test job above.

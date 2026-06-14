@@ -27,14 +27,20 @@ def _skills(gen):
     return gen._load_registry()
 
 
-def test_registry_is_family_b_only(gen):
+def test_registry_has_both_families(gen):
     skills = _skills(gen)
     assert set(skills) == {
         "pead-screener",
         "earnings-trade-analyzer",
         "ibd-distribution-day-monitor",
+        "vcp-screener",
+        "parabolic-short-trade-planner",
+        "ftd-detector",
     }
-    assert all(cfg.family == "B" and cfg.budget and not cfg.has_quote for cfg in skills.values())
+    for cfg in skills.values():
+        # budget (family B) and quote (family A) are mutually exclusive.
+        assert cfg.budget == (cfg.family == "B")
+        assert cfg.has_quote == (cfg.family == "A")
 
 
 def test_render_is_idempotent(gen):
@@ -47,19 +53,31 @@ def test_no_unsubstituted_tokens(gen):
         assert "@@" not in gen.render_fmp_client(cfg)
 
 
-def test_generated_has_no_quote_surface(gen):
+def test_family_b_no_quote_has_budget(gen):
     for cfg in _skills(gen).values():
+        if cfg.family != "B":
+            continue
         out = gen.render_fmp_client(cfg)
         assert "def get_quote" not in out
         assert '"quote"' not in out  # no quote entry in _FMP_ENDPOINTS
-
-
-def test_generated_budget_surface(gen):
-    for cfg in _skills(gen).values():
-        out = gen.render_fmp_client(cfg)
         assert "class ApiCallBudgetExceeded(Exception):" in out
         assert "max_api_calls: int = 200" in out
         assert '"budget_remaining"' in out
+
+
+def test_family_a_has_quote_no_budget(gen):
+    for cfg in _skills(gen).values():
+        if cfg.family != "A":
+            continue
+        out = gen.render_fmp_client(cfg)
+        assert "def get_quote(self, symbols: str)" in out
+        assert '"quote": [' in out  # quote entry in _FMP_ENDPOINTS
+        assert "ApiCallBudgetExceeded" not in out
+        assert "max_api_calls" not in out
+        assert "budget_remaining" not in out
+        assert (
+            "def get_historical_prices(self, symbol: str, days: int = 365) -> Optional[dict]" in out
+        )
 
 
 def test_core_upgrade_present(gen):
@@ -91,6 +109,8 @@ def test_compat_template_matches_vendored(gen):
     # The byte-match invariant: the canonical compat == each skill's vendored copy.
     compat = gen.render_compat()
     for cfg in _skills(gen).values():
+        if not cfg.has_compat:
+            continue  # ftd-detector vendors no _fmp_compat.py
         vendored = (REPO_ROOT / "skills" / cfg.skill / "scripts" / "_fmp_compat.py").read_text(
             encoding="utf-8"
         )

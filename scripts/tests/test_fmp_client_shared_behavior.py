@@ -23,6 +23,12 @@ FAMILY_B = [
     "skills/ibd-distribution-day-monitor/scripts/fmp_client.py",
 ]
 
+FAMILY_A = [
+    "skills/vcp-screener/scripts/fmp_client.py",
+    "skills/parabolic-short-trade-planner/scripts/fmp_client.py",
+    "skills/ftd-detector/scripts/fmp_client.py",
+]
+
 
 def _load(rel_path: str):
     abs_path = REPO_ROOT / rel_path
@@ -73,3 +79,17 @@ def test_no_quote_surface(rel_path):
     assert not hasattr(mod.FMPClient, "get_quote")
     assert hasattr(mod.FMPClient, "get_historical_prices")
     assert hasattr(mod.FMPClient, "get_earnings_calendar")
+
+
+@pytest.mark.parametrize("rel_path", FAMILY_A)
+def test_family_a_quote_surface_no_budget(rel_path, monkeypatch):
+    monkeypatch.setenv("FMP_API_KEY", "test_key")  # pragma: allowlist secret
+    mod = _load(rel_path)
+    assert hasattr(mod.FMPClient, "get_quote")
+    assert hasattr(mod.FMPClient, "get_batch_quotes")
+    assert hasattr(mod.FMPClient, "calculate_sma")
+    assert not hasattr(mod, "ApiCallBudgetExceeded")
+    # No budget surface: __init__ takes no max_api_calls, stats omit budget keys.
+    client = mod.FMPClient(api_key="test_key")  # pragma: allowlist secret
+    stats = client.get_api_stats()
+    assert set(stats) == {"cache_entries", "api_calls_made", "rate_limit_reached"}
