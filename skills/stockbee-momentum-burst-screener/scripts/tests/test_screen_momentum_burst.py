@@ -210,3 +210,6 @@ def test_include_rejected_handles_insufficient_history(tmp_path):
     text = out.read_text(encoding="utf-8")
     assert "SHORT" in text
     assert "Volume: n/a" in text
+    # Missing numeric fields render as n/a, never as a stray "None"/"Nonex".
+    assert "Nonex" not in text
+    assert "None" not in text

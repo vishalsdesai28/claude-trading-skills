@@ -936,27 +936,32 @@ def format_candidate_md(row: dict[str, Any]) -> str:
     tags = ", ".join(row.get("trigger_tags") or []) or "none"
     rejects = ", ".join(row.get("reject_reasons") or []) or "none"
     soft = ", ".join(row.get("soft_failure_tags") or []) or "none"
+
     # Hard-reject skeletons (e.g. insufficient_history) omit numeric fields, so
-    # guard the thousands-separator format against a missing/None volume.
+    # render any missing value as "n/a" instead of None / a format crash.
+    def fmt(value: Any) -> str:
+        return "n/a" if value is None else str(value)
+
     volume = row.get("volume")
     volume_str = f"{volume:,}" if isinstance(volume, (int, float)) else "n/a"
     return "\n".join(
         [
-            f"### {row['symbol']} — {row.get('rating')} / {row.get('setup_score')}",
+            f"### {row['symbol']} — {fmt(row.get('rating'))} / {fmt(row.get('setup_score'))}",
             "",
-            f"- State: `{row.get('state')}`",
-            f"- Trigger: `{row.get('primary_trigger')}` ({tags})",
-            f"- Price: close {row.get('close')}, day gain {row.get('day_gain_pct')}%, "
-            f"dollar gain {row.get('dollar_gain')}",
+            f"- State: `{fmt(row.get('state'))}`",
+            f"- Trigger: `{fmt(row.get('primary_trigger'))}` ({tags})",
+            f"- Price: close {fmt(row.get('close'))}, day gain {fmt(row.get('day_gain_pct'))}%, "
+            f"dollar gain {fmt(row.get('dollar_gain'))}",
             f"- Volume: {volume_str} "
-            f"({row.get('volume_ratio_1d')}x previous day, {row.get('volume_ratio_20d')}x 20d avg)",
-            f"- Close location: {row.get('close_location_pct')}%",
-            f"- Base: {row.get('prior_base_days')} days, width {row.get('base_width_pct')}%",
-            f"- Entry / stop reference: {row.get('entry_reference')} / {row.get('stop_reference')} "
-            f"({row.get('risk_pct_to_stop')}% risk to stop)",
+            f"({fmt(row.get('volume_ratio_1d'))}x previous day, "
+            f"{fmt(row.get('volume_ratio_20d'))}x 20d avg)",
+            f"- Close location: {fmt(row.get('close_location_pct'))}%",
+            f"- Base: {fmt(row.get('prior_base_days'))} days, width {fmt(row.get('base_width_pct'))}%",
+            f"- Entry / stop reference: {fmt(row.get('entry_reference'))} / "
+            f"{fmt(row.get('stop_reference'))} ({fmt(row.get('risk_pct_to_stop'))}% risk to stop)",
             f"- Soft failure tags: {soft}",
             f"- Reject reasons: {rejects}",
-            f"- Downstream action: {row.get('downstream_action')}",
+            f"- Downstream action: {fmt(row.get('downstream_action'))}",
             "",
         ]
     )
