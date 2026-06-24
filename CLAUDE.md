@@ -235,6 +235,7 @@ The table below is **auto-generated** from `skills-index.yaml` by `scripts/gener
 | **Edge Hint Extractor** | ❌ Not used | ❌ Not used | ❌ Not used | Extracts hints from observations/news; pure calculation |
 | **Edge Pipeline Orchestrator** | ❌ Not used | ❌ Not used | ❌ Not used | Orchestrates edge pipeline subskills via subprocess |
 | **Edge Signal Aggregator** | ❌ Not used | ❌ Not used | ❌ Not used | Aggregates signals from edge-finding skills |
+| **Edge Social Aggregator** | ❌ Not used | ❌ Not used | ❌ Not used | Scores the local social signal index; no network or API key |
 | **Edge Strategy Designer** | ❌ Not used | ❌ Not used | ❌ Not used | Converts edge concepts into strategy drafts |
 | **Edge Strategy Reviewer** | ❌ Not used | ❌ Not used | ❌ Not used | Deterministic scoring on local YAML drafts |
 | **Exposure Coach** | ❌ Not used | ❌ Not used | ❌ Not used | Synthesizes signals from other skills; pure calculation |
@@ -262,11 +263,13 @@ The table below is **auto-generated** from `skills-index.yaml` by `scripts/gener
 | **Skill Designer** | ❌ Not used | ❌ Not used | ❌ Not used | Generates skill scaffolding from idea specs |
 | **Skill Idea Miner** | ❌ Not used | ❌ Not used | ❌ Not used | Mines session logs for skill ideas |
 | **Skill Integration Tester** | ❌ Not used | ❌ Not used | ❌ Not used | Validates multi-skill workflow contracts |
+| **Social Signal Ingestor** | ❌ Not used | ❌ Not used | ❌ Not used | Public video metadata + subtitles via the yt-dlp binary (no API key); Transcript cleaning + signal indexing run locally |
 | **Stanley Druckenmiller Investment** | ❌ Not used | ❌ Not used | ❌ Not used | Synthesizes outputs from upstream skills; pure calculation |
 | **Stockbee Momentum Burst Screener** | ✅ Required | ❌ Not used | ❌ Not used | Live US universe and daily OHLCV via Financial Modeling Prep |
 | **Strategy Pivot Designer** | ❌ Not used | ❌ Not used | ❌ Not used | Pivot proposal generator; pure calculation |
 | **Technical Analyst** | ❌ Not used | ❌ Not used | ❌ Not used | Chart screenshot input |
 | **Theme Detector** | 🟡 Optional | 🟡 Optional (Recommended) | ❌ Not used | Financial Modeling Prep API |
+| **Ticker Enricher** | ❌ Not used | ❌ Not used | ❌ Not used | Company metadata + recommendation/current prices via yfinance; Record shaping + gain/age computation run locally |
 | **Trade Hypothesis Ideator** | ❌ Not used | ❌ Not used | ❌ Not used | Hypothesis generation from journal/data inputs; pure calculation |
 | **Trade Performance Coach** | ❌ Not used | ❌ Not used | ❌ Not used | Works from local trader-memory / postmortem / journal records; no network or paid API required |
 | **Trader Memory Core** | 🟡 Optional | ❌ Not used | ❌ Not used | Financial Modeling Prep API |
@@ -277,6 +280,7 @@ The table below is **auto-generated** from `skills-index.yaml` by `scripts/gener
 | **VCP Screener** | ✅ Required | ❌ Not used | ❌ Not used | S&P 500 OHLCV via FMP |
 | **Value Dividend Screener** | ✅ Required | 🟡 Optional (Recommended) | ❌ Not used | Financial Modeling Prep API |
 | **Weekly Performance Digest** | ❌ Not used | ❌ Not used | ❌ Not used | Pure calculation; works offline |
+| **Write Supabase** | ❌ Not used | ❌ Not used | ❌ Not used | Writes via the Supabase REST API (SUPABASE_URL + service key, auto-loaded from .env) |
 <!-- skills-index:end name="api-matrix" -->
 
 > Note: a skill listed as `❌ Not used` for FMP / FINVIZ / Alpaca may still need WebSearch, public CSVs, chart screenshots, or other non-paid inputs. See each skill's full `integrations[]` entry in `skills-index.yaml` for the complete picture.

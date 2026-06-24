@@ -325,6 +325,25 @@ skills:
   outputs:
   - conviction_dashboard
   workflows: []
+- id: edge-social-aggregator
+  display_name: Edge Social Aggregator
+  category: strategy-research
+  status: beta
+  summary: Score and consolidate social trading signals (YouTube/X/Reddit) from social-signal-ingestor
+    into a per-ticker feed for edge-signal-aggregator, applying recency x corroboration (source-count)
+    scoring and deduping each ticker across videos. Does not redo cross-source merge or ranking.
+  timeframe: daily
+  difficulty: intermediate
+  integrations:
+  - id: local_calculation
+    type: calculation
+    requirement: not_required
+    note: Scores the local social signal index; no network or API key
+  inputs:
+  - social_signal_index
+  outputs:
+  - social_signal_feed
+  workflows: []
 - id: edge-strategy-designer
   display_name: Edge Strategy Designer
   category: strategy-research
@@ -852,6 +871,31 @@ skills:
   outputs:
   - workflow_validation_report
   workflows: []
+- id: social-signal-ingestor
+  display_name: Social Signal Ingestor
+  category: strategy-research
+  status: beta
+  summary: Ingest trading signals from YouTube channels via yt-dlp transcripts, extract one structured
+    signal note per ticker into a local vault, and emit a machine-readable signal index for the edge
+    pipeline. YouTube is v1; X/Reddit plug in later via Agent-Reach.
+  timeframe: daily
+  difficulty: intermediate
+  integrations:
+  - id: youtube
+    type: web
+    requirement: required
+    note: Public video metadata + subtitles via the yt-dlp binary (no API key)
+  - id: local_calculation
+    type: calculation
+    requirement: not_required
+    note: Transcript cleaning + signal indexing run locally
+  inputs:
+  - youtube_channel_list
+  outputs:
+  - social_signal_notes
+  - social_signal_index
+  workflows:
+  - social-signal-daily
 - id: stanley-druckenmiller-investment
   display_name: Stanley Druckenmiller Investment
   category: strategy-research
@@ -964,6 +1008,30 @@ skills:
   - trending_themes
   workflows:
   - swing-opportunity-daily
+- id: ticker-enricher
+  display_name: Ticker Enricher
+  category: strategy-research
+  status: beta
+  summary: Enrich ticker signals with company name / sector / industry and recommendation-date +
+    current price via Yahoo Finance, and emit a records file for a generic writer such as
+    write-supabase (the dashboard derives gain percent and days held). Reusable by any producer with tickers.
+  timeframe: daily
+  difficulty: intermediate
+  integrations:
+  - id: yahoo_finance
+    type: market_data
+    requirement: required
+    note: Company metadata + recommendation/current prices via yfinance
+  - id: local_calculation
+    type: calculation
+    requirement: not_required
+    note: Record shaping + gain/age computation run locally
+  inputs:
+  - social_signal_index
+  outputs:
+  - enriched_records
+  workflows:
+  - social-signal-daily
 - id: trade-hypothesis-ideator
   display_name: Trade Hypothesis Ideator
   category: trade-memory
@@ -1179,3 +1247,23 @@ skills:
   workflows:
   - trade-memory-loop
   - monthly-performance-review
+- id: write-supabase
+  display_name: Write Supabase
+  category: meta
+  status: beta
+  summary: Generic Supabase table writer. Reads a records JSON file and upserts or inserts the rows
+    into a caller-named Supabase table with a caller-supplied conflict key. Domain-agnostic and
+    reusable by any workflow that needs to persist records to Supabase.
+  timeframe: event-driven
+  difficulty: intermediate
+  integrations:
+  - id: supabase
+    type: web
+    requirement: required
+    note: Writes via the Supabase REST API (SUPABASE_URL + service key, auto-loaded from .env)
+  inputs:
+  - records_file
+  outputs:
+  - supabase_rows
+  workflows:
+  - social-signal-daily

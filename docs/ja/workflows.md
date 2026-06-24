@@ -26,6 +26,7 @@ permalink: /ja/workflows/
 | [`market-regime-daily`](#market-regime-daily) — Market Regime Daily | daily | 15 | no-api-basic | beginner |
 | [`monthly-performance-review`](#monthly-performance-review) — Monthly Performance Review | monthly | 90 | no-api-basic | intermediate |
 | [`multi-asset-opportunity-daily`](#multi-asset-opportunity-daily) — Multi-Asset Opportunity Daily | daily | 45 | mixed | intermediate |
+| [`social-signal-daily`](#social-signal-daily) — Social Signal Daily | daily | 20 | mixed | intermediate |
 | [`swing-opportunity-daily`](#swing-opportunity-daily) — Swing Opportunity Daily | daily | 35 | fmp-required | intermediate |
 | [`trade-memory-loop`](#trade-memory-loop) — Trade Memory Loop | ad-hoc | 30 | no-api-basic | beginner |
 
@@ -287,6 +288,53 @@ permalink: /ja/workflows/
 - Confirm position sizing respects portfolio risk caps (per-position and per-sector).
 - For forex-related output, confirm research_only=true; never wire to a broker.
 - Confirm IDEA → ENTRY_READY transitions are explicit and reviewed.
+
+**Journal 出力先:** `trader-memory-core`
+
+---
+
+## Social Signal Daily {#social-signal-daily}
+
+**`social-signal-daily`** · daily · ~20 min · mixed · intermediate
+
+**実行タイミング:** Daily (premarket) to mine trading YouTube channels for fresh signals, enrich each recommended ticker with company + price data, and persist them to the Supabase recommendations ledger that backs the performance dashboard.
+
+**実行してはいけないとき:** Do not treat social signals as buy/sell instructions — they are noisy, single-source, and tracked only as paper recommendations. Keep ingest volume low to respect YouTube rate limits (watch for HTTP 429).
+
+**必須スキル:** `social-signal-ingestor`, `ticker-enricher`, `write-supabase`
+
+**任意スキル:** （なし）
+
+**artifact 一覧:**
+
+| Artifact | 生成ステップ | 必須 | 下流ヒント |
+|---|---|---|---|
+| `social_signal_index` | 1 | あり | — |
+| `enriched_records` | 2 | あり | — |
+| `ledger_rows` | 3 | あり | — |
+
+**ステップ:**
+
+**ステップ 1: Ingest YouTube videos and extract signal notes** （判断ゲート） → `social-signal-ingestor`
+
+- produces: `social_signal_index`
+- **判断:** For each new transcript, does it contain a real, single-ticker tradeable claim worth a signal note, or is it noise/promotion to skip?
+
+**ステップ 2: Enrich tickers with company metadata + prices + gain/age** → `ticker-enricher`
+
+- consumes: `social_signal_index`
+- produces: `enriched_records`
+
+**ステップ 3: Write the enriched records to the Supabase recommendations table** → `write-supabase`
+
+- consumes: `enriched_records`
+- produces: `ledger_rows`
+
+**手動レビュー:**
+
+- Confirm each signal note carries one real, single ticker (no invented or multi-symbol tickers).
+- Confirm ingest volume stayed within YouTube rate limits (HTTP 429).
+- Remember these are paper recommendations for tracking, not trade instructions.
 
 **Journal 出力先:** `trader-memory-core`
 

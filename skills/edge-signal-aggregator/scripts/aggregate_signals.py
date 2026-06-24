@@ -34,6 +34,9 @@ DEFAULT_WEIGHTS = {
     "sector_analyst": 0.15,
     "institutional_flow_tracker": 0.15,
     "edge_hint_extractor": 0.10,
+    # Social (YouTube/X/Reddit via edge-social-aggregator) is the noisiest input,
+    # so it carries the lowest weight: it can nudge a ranking, never drive it.
+    "edge_social_aggregator": 0.10,
 }
 
 DEFAULT_CONFIG = {
@@ -534,6 +537,33 @@ def extract_signals_from_hints(data: list[dict]) -> list[dict]:
     return signals
 
 
+def extract_signals_from_social(data: list[dict]) -> list[dict]:
+    """Extract signals from edge-social-aggregator output (YouTube/X/Reddit)."""
+    signals = []
+    for doc in data:
+        source_file = doc.get("_source_file", "unknown")
+        social = doc.get("signals", [])
+        if not social and "items" in doc:
+            social = doc.get("items", [])
+
+        for item in social:
+            if not isinstance(item, dict):
+                continue
+            signal = {
+                "skill": "edge_social_aggregator",
+                "signal_ref": item.get("ticker", "unknown"),
+                "title": item.get("title", f"Social signal: {item.get('ticker', 'unknown')}"),
+                "raw_score": normalize_score_auto(item.get("social_conviction", item.get("score"))),
+                "tickers": as_ticker_list(item.get("tickers", item.get("ticker", []))),
+                "direction": normalize_direction(item.get("direction"), default="NEUTRAL"),
+                "time_horizon": item.get("time_horizon", "unknown"),
+                "timestamp": item.get("timestamp", doc.get("generated_at")),
+                "source_file": source_file,
+            }
+            signals.append(signal)
+    return signals
+
+
 def calculate_ticker_overlap(tickers_a: list[str], tickers_b: list[str]) -> float:
     """Calculate Jaccard similarity between two ticker lists."""
     if not tickers_a or not tickers_b:
@@ -877,6 +907,7 @@ def aggregate_signals(
     institutional: list[dict],
     hints: list[dict],
     config: dict,
+    social: list[dict] | None = None,
 ) -> dict:
     """Main aggregation function."""
     # Extract signals from all sources
@@ -887,6 +918,7 @@ def aggregate_signals(
     all_signals.extend(extract_signals_from_sectors(sectors))
     all_signals.extend(extract_signals_from_institutional(institutional))
     all_signals.extend(extract_signals_from_hints(hints))
+    all_signals.extend(extract_signals_from_social(social or []))
 
     total_input = len(all_signals)
 
@@ -1057,6 +1089,10 @@ def main() -> int:
         help="Glob pattern for edge-hint-extractor YAML files",
     )
     parser.add_argument(
+        "--social-signals",
+        help="Glob pattern for edge-social-aggregator JSON files (YouTube/X/Reddit)",
+    )
+    parser.add_argument(
         "--weights-config",
         help="Path to custom weights YAML configuration",
     )
@@ -1087,6 +1123,7 @@ def main() -> int:
             args.sectors,
             args.institutional,
             args.hints,
+            args.social_signals,
         ]
     ):
         print("Error: At least one input source must be provided", file=sys.stderr)
@@ -1105,6 +1142,7 @@ def main() -> int:
     sectors = load_json_files(args.sectors)
     institutional = load_json_files(args.institutional)
     hints = load_yaml_files(args.hints)
+    social = load_json_files(args.social_signals)
 
     # Run aggregation
     result = aggregate_signals(
@@ -1115,6 +1153,7 @@ def main() -> int:
         institutional=institutional,
         hints=hints,
         config=config,
+        social=social,
     )
 
     # Create output directory

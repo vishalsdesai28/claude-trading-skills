@@ -1,0 +1,71 @@
+schema_version: 1
+id: social-signal-daily
+display_name: Social Signal Daily
+cadence: daily
+estimated_minutes: 20
+target_users:
+  - part-time-swing-trader
+  - growth-investor
+difficulty: intermediate
+api_profile: mixed
+
+when_to_run: >-
+  Daily (premarket) to mine trading YouTube channels for fresh signals, enrich each
+  recommended ticker with company + price data, and persist them to the Supabase
+  recommendations ledger that backs the performance dashboard.
+when_not_to_run: >-
+  Do not treat social signals as buy/sell instructions — they are noisy, single-source,
+  and tracked only as paper recommendations. Keep ingest volume low to respect YouTube
+  rate limits (watch for HTTP 429).
+
+required_skills:
+  - social-signal-ingestor
+  - ticker-enricher
+  - write-supabase
+
+artifacts:
+  - id: social_signal_index
+    produced_by_step: 1
+    required: true
+  - id: enriched_records
+    produced_by_step: 2
+    required: true
+  - id: ledger_rows
+    produced_by_step: 3
+    required: true
+
+steps:
+  - step: 1
+    name: Ingest YouTube videos and extract signal notes
+    skill: social-signal-ingestor
+    produces:
+      - social_signal_index
+    decision_gate: true
+    decision_question: >-
+      For each new transcript, does it contain a real, single-ticker tradeable
+      claim worth a signal note, or is it noise/promotion to skip?
+
+  - step: 2
+    name: Enrich tickers with company metadata + prices + gain/age
+    skill: ticker-enricher
+    consumes:
+      - social_signal_index
+    produces:
+      - enriched_records
+    decision_gate: false
+
+  - step: 3
+    name: Write the enriched records to the Supabase recommendations table
+    skill: write-supabase
+    consumes:
+      - enriched_records
+    produces:
+      - ledger_rows
+    decision_gate: false
+
+manual_review:
+  - Confirm each signal note carries one real, single ticker (no invented or multi-symbol tickers).
+  - Confirm ingest volume stayed within YouTube rate limits (HTTP 429).
+  - Remember these are paper recommendations for tracking, not trade instructions.
+
+journal_destination: trader-memory-core
