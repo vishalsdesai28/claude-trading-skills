@@ -111,6 +111,7 @@ jobs:
           python -m pytest
           skills/canslim-screener/scripts/tests/test_fmp_fallback.py
           skills/canslim-screener/scripts/tests/test_fmp_stable_migration.py
+          skills/canslim-screener/scripts/tests/test_institutional_fallback.py
           -v
           --cov=skills/canslim-screener/scripts
           --cov-report=term-missing
