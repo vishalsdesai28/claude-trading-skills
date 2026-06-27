@@ -168,8 +168,11 @@ def build_records(
     for ticker, sigs in group_by_ticker(index).items():
         date_rec = earliest_claim_date(sigs)
         profile = fetch_profile(ticker)
-        price_at_rec = fetch_price_on(ticker, date_rec) if date_rec else None
         current = fetch_current_price(ticker)
+        # Fall back to the current close when the recommendation-date close isn't available
+        # (e.g. a future-dated upload_date from yt-dlp timezone skew, or a non-trading day),
+        # so the baseline is never null — a just-posted call's baseline ≈ today's price.
+        price_at_rec = (fetch_price_on(ticker, date_rec) if date_rec else None) or current
         records.append(
             map_to_record(ticker, sigs, vault_current, profile, price_at_rec, current, now)
         )

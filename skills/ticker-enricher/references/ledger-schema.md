@@ -11,7 +11,7 @@ table (created via migration; written by `write-supabase`). The table stores **f
 | sector | text | yfinance sector |
 | industry | text | yfinance industry |
 | date_recommended | date | earliest `claim_date` for the ticker (**immutable** — frozen by trigger) |
-| price_at_recommendation | numeric | Yahoo close on date_recommended (**immutable** — frozen by trigger) |
+| price_at_recommendation | numeric | Yahoo close on date_recommended; **falls back to the current close** if that date's close isn't available yet (future-dated upload / non-trading day) so it's never null. **Immutable once set** (frozen by trigger) |
 | current_price | numeric | latest close (the only field a refresh changes) |
 | recommendation_source | text | `YouTube — <channel>` (from the source note) |
 | source_skill | text | provenance, e.g. `social-signal-ingestor` |
@@ -58,8 +58,11 @@ alter table public.recommendations enable row level security;
 -- Baseline is immutable: any UPDATE keeps the original recommendation price + date.
 create or replace function public.freeze_recommendation_baseline() returns trigger as $$
 begin
-  new.price_at_recommendation := old.price_at_recommendation;
-  new.date_recommended       := old.date_recommended;
+  -- Freeze the baseline only once set: allow null -> value (backfill), block value -> change.
+  if old.price_at_recommendation is not null then
+    new.price_at_recommendation := old.price_at_recommendation;
+  end if;
+  new.date_recommended := old.date_recommended;
   return new;
 end;
 $$ language plpgsql;

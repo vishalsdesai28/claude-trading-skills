@@ -66,6 +66,7 @@ def test_build_records_full_row(tmp_path, monkeypatch):
     assert len(recs) == 1
     r = recs[0]
     assert r["ticker"] == "SOFI"
+    assert r["price_at_recommendation"] == 16.0  # historical close used when available
     assert r["company_name"] == "SoFi Technologies"
     assert r["sector"] == "Financial Services"
     assert r["industry"] == "Credit Services"
@@ -78,3 +79,22 @@ def test_build_records_full_row(tmp_path, monkeypatch):
     assert r["source_skill"] == "social-signal-ingestor"
     assert r["direction"] == "long"
     assert r["status"] == "active"
+
+
+def test_build_records_falls_back_to_current_when_no_historical_close(tmp_path, monkeypatch):
+    note_dir = tmp_path / "sources" / "youtube"
+    note_dir.mkdir(parents=True)
+    (note_dir / "2026-06-27_VID.md").write_text("---\nchannel: X\n---\n")
+    idx = {
+        "signals": [
+            {"ticker": "F", "direction": "long", "claim_date": "2026-06-27",
+             "sources": ["sources/youtube/2026-06-27_VID"]}
+        ]
+    }
+    monkeypatch.setattr(et, "fetch_profile", lambda t: {"company_name": "Ford", "sector": "x", "industry": "y"})
+    monkeypatch.setattr(et, "fetch_price_on", lambda t, d: None)  # future/no-trade date → no close
+    monkeypatch.setattr(et, "fetch_current_price", lambda t: 14.13)
+
+    r = et.build_records(idx, tmp_path, NOW)[0]
+    assert r["price_at_recommendation"] == 14.13  # fell back to current → never null
+    assert r["current_price"] == 14.13
