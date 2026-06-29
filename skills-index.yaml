@@ -948,6 +948,43 @@ skills:
   - pead_handoff_candidates
   workflows:
   - stockbee-ep-daily
+- id: stockbee-exhaustion-hammer-screener
+  display_name: Stockbee Exhaustion Hammer Screener
+  category: swing-opportunity
+  status: beta
+  summary: Screen US stocks for Stockbee-style selling-exhaustion hammer candidates using quality/liquidity
+    gates, prior momentum, pullback depth, undercut/reclaim, hammer geometry, volume confirmation,
+    market gate, and risk-distance filters.
+  timeframe: daily
+  difficulty: intermediate
+  integrations:
+  - id: fmp
+    type: market_data
+    requirement: required
+    note: Live US universe, daily OHLCV, and optional quote-derived near-close bar via Financial Modeling Prep
+  - id: prices_json
+    type: local_file
+    requirement: optional
+    note: Offline or near-close provisional OHLCV JSON fallback for no-API screening and tests
+  - id: profiles_json
+    type: local_file
+    requirement: optional
+    note: Optional quality metadata keyed by symbol, such as marketCap and holder counts
+  - id: local_calculation
+    type: calculation
+    requirement: not_required
+    note: Pullback context, hammer geometry, risk-distance scoring, and report generation
+  inputs:
+  - daily_ohlcv_universe
+  - quality_profiles
+  - market_regime_report
+  - risk_policy
+  outputs:
+  - exhaustion_hammer_candidates
+  - setup_quality_scores
+  - trade_plan_inputs
+  workflows:
+  - swing-opportunity-daily
 - id: stockbee-momentum-burst-screener
   display_name: Stockbee Momentum Burst Screener
   category: swing-opportunity

@@ -785,6 +785,37 @@
     {
       "category": "swing-opportunity",
       "difficulty": "intermediate",
+      "display_name": "Stockbee Exhaustion Hammer Screener",
+      "id": "stockbee-exhaustion-hammer-screener",
+      "integrations": [
+        {
+          "id": "fmp",
+          "requirement": "required",
+          "type": "market_data"
+        },
+        {
+          "id": "prices_json",
+          "requirement": "optional",
+          "type": "local_file"
+        },
+        {
+          "id": "profiles_json",
+          "requirement": "optional",
+          "type": "local_file"
+        },
+        {
+          "id": "local_calculation",
+          "requirement": "not_required",
+          "type": "calculation"
+        }
+      ],
+      "status": "beta",
+      "summary": "Screen US stocks for Stockbee-style selling-exhaustion hammer candidates using quality/liquidity gates, prior momentum, pullback depth, undercut/reclaim, hammer geometry, volume confirmation, market gate, and risk-distance filters.",
+      "timeframe": "daily"
+    },
+    {
+      "category": "swing-opportunity",
+      "difficulty": "intermediate",
       "display_name": "Stockbee Momentum Burst Screener",
       "id": "stockbee-momentum-burst-screener",
       "integrations": [
@@ -1122,6 +1153,7 @@
       "id": "swing-opportunity",
       "optional_skills": [
         "stockbee-momentum-burst-screener",
+        "stockbee-exhaustion-hammer-screener",
         "finviz-screener"
       ],
       "recommended_skills": [
@@ -1349,10 +1381,11 @@
       "cadence": "daily",
       "difficulty": "intermediate",
       "display_name": "Swing Opportunity Daily",
-      "estimated_minutes": 35,
+      "estimated_minutes": 40,
       "id": "swing-opportunity-daily",
       "optional_skills": [
         "stockbee-momentum-burst-screener",
+        "stockbee-exhaustion-hammer-screener",
         "canslim-screener",
         "breakout-trade-planner",
         "theme-detector"

@@ -29,7 +29,7 @@ permalink: /ja/workflows/
 | [`stockbee-20pct-study-daily`](#stockbee-20pct-study-daily) — Stockbee 20% Study Daily | daily | 30 | mixed | advanced |
 | [`stockbee-ep-daily`](#stockbee-ep-daily) — Stockbee EP Daily | daily | 35 | mixed | advanced |
 | [`stockbee-fluency-loop`](#stockbee-fluency-loop) — Stockbee Setup Fluency Loop | daily | 20 | no-api-basic | intermediate |
-| [`swing-opportunity-daily`](#swing-opportunity-daily) — Swing Opportunity Daily | daily | 35 | fmp-required | intermediate |
+| [`swing-opportunity-daily`](#swing-opportunity-daily) — Swing Opportunity Daily | daily | 40 | fmp-required | intermediate |
 | [`trade-memory-loop`](#trade-memory-loop) — Trade Memory Loop | ad-hoc | 30 | no-api-basic | beginner |
 
 ---
@@ -497,7 +497,7 @@ permalink: /ja/workflows/
 
 ## Swing Opportunity Daily {#swing-opportunity-daily}
 
-**`swing-opportunity-daily`** · daily · ~35 min · fmp-required · intermediate
+**`swing-opportunity-daily`** · daily · ~40 min · fmp-required · intermediate
 
 **実行タイミング:** Only after market-regime-daily has produced a non-restrictive exposure decision. Identifies swing trade candidates and builds entry plans.
 
@@ -505,7 +505,7 @@ permalink: /ja/workflows/
 
 **必須スキル:** `vcp-screener`, `technical-analyst`, `position-sizer`, `trader-memory-core`
 
-**任意スキル:** `stockbee-momentum-burst-screener`, `canslim-screener`, `breakout-trade-planner`, `theme-detector`
+**任意スキル:** `stockbee-momentum-burst-screener`, `stockbee-exhaustion-hammer-screener`, `canslim-screener`, `breakout-trade-planner`, `theme-detector`
 
 **前提ワークフロー（informational）:**
 
@@ -517,12 +517,13 @@ permalink: /ja/workflows/
 |---|---|---|---|
 | `vcp_candidates` | 1 | あり | — |
 | `momentum_burst_candidates` | 2 | なし | — |
-| `canslim_candidates` | 3 | なし | — |
-| `theme_candidates` | 4 | なし | — |
-| `validated_setups` | 5 | あり | — |
-| `position_sizing` | 6 | あり | — |
-| `trade_plans` | 7 | なし | `trade-memory-loop` |
-| `candidate_journal_entry` | 8 | あり | `trade-memory-loop` |
+| `exhaustion_hammer_candidates` | 3 | なし | — |
+| `canslim_candidates` | 4 | なし | — |
+| `theme_candidates` | 5 | なし | — |
+| `validated_setups` | 6 | あり | — |
+| `position_sizing` | 7 | あり | — |
+| `trade_plans` | 8 | なし | `trade-memory-loop` |
+| `candidate_journal_entry` | 9 | あり | `trade-memory-loop` |
 
 **ステップ:**
 
@@ -534,31 +535,35 @@ permalink: /ja/workflows/
 
 - produces: `momentum_burst_candidates`
 
-**ステップ 3: Run CANSLIM screener** （任意） → `canslim-screener`
+**ステップ 3: Run Stockbee exhaustion hammer screener** （任意） → `stockbee-exhaustion-hammer-screener`
+
+- produces: `exhaustion_hammer_candidates`
+
+**ステップ 4: Run CANSLIM screener** （任意） → `canslim-screener`
 
 - produces: `canslim_candidates`
 
-**ステップ 4: Theme detection cross-check** （任意） → `theme-detector`
+**ステップ 5: Theme detection cross-check** （任意） → `theme-detector`
 
 - produces: `theme_candidates`
 
-**ステップ 5: Validate setups on weekly chart** （判断ゲート） → `technical-analyst`
+**ステップ 6: Validate setups on weekly chart** （判断ゲート） → `technical-analyst`
 
-- consumes: `vcp_candidates`, `momentum_burst_candidates`, `canslim_candidates`, `theme_candidates`
+- consumes: `vcp_candidates`, `momentum_burst_candidates`, `exhaustion_hammer_candidates`, `canslim_candidates`, `theme_candidates`
 - produces: `validated_setups`
-- **判断:** Which candidates have a clean weekly setup (Stage 2 uptrend, tight base, or Stockbee-style range expansion from a controlled base) and pass the manual chart review? Reject candidates that don't.
+- **判断:** Which candidates have a clean weekly setup (Stage 2 uptrend, tight base, or Stockbee-style range expansion from a controlled base) and pass the manual chart review? For exhaustion hammers, confirm the pullback is not thesis-breaking and risk to the day low is acceptable. Reject candidates that don't pass.
 
-**ステップ 6: Calculate position size** → `position-sizer`
+**ステップ 7: Calculate position size** → `position-sizer`
 
 - consumes: `validated_setups`
 - produces: `position_sizing`
 
-**ステップ 7: Build entry plan** （任意） → `breakout-trade-planner`
+**ステップ 8: Build entry plan** （任意） → `breakout-trade-planner`
 
 - consumes: `validated_setups`, `position_sizing`
 - produces: `trade_plans`
 
-**ステップ 8: Register thesis in journal** （判断ゲート） → `trader-memory-core`
+**ステップ 9: Register thesis in journal** （判断ゲート） → `trader-memory-core`
 
 - consumes: `position_sizing`, `trade_plans`
 - produces: `candidate_journal_entry`
@@ -569,6 +574,7 @@ permalink: /ja/workflows/
 - Confirm market-regime-daily exposure_decision allows new risk before acting.
 - Reject any candidate where weekly setup is unclear, even if screener passed.
 - Treat Stockbee momentum burst output as candidate generation only; require chart validation and risk-distance review.
+- Treat Stockbee exhaustion hammer output as candidate generation only; confirm the pullback is not caused by a thesis-breaking news event and verify risk to the day low.
 - Verify total portfolio heat is within budget before placing any order.
 - All orders are placed manually at the broker; no auto-execution.
 

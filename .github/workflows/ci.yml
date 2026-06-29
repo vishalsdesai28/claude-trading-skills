@@ -145,6 +145,13 @@ jobs:
           --cov-report=term-missing
           --cov-append
 
+      - name: Test stockbee-exhaustion-hammer-screener
+        run: >
+          python -m pytest skills/stockbee-exhaustion-hammer-screener/scripts/tests/ -v
+          --cov=skills/stockbee-exhaustion-hammer-screener/scripts
+          --cov-report=term-missing
+          --cov-append
+
       - name: Test stockbee-momentum-burst-screener
         run: >
           python -m pytest skills/stockbee-momentum-burst-screener/scripts/tests/ -v

@@ -83,7 +83,7 @@ permalink: /ja/skillsets/
 
 **推奨スキル:** `canslim-screener`, `breakout-trade-planner`, `theme-detector`
 
-**任意スキル:** `stockbee-momentum-burst-screener`, `finviz-screener`
+**任意スキル:** `stockbee-momentum-burst-screener`, `stockbee-exhaustion-hammer-screener`, `finviz-screener`
 
 **関連ワークフロー:** `swing-opportunity-daily`
 
