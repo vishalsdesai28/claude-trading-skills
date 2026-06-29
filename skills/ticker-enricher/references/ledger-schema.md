@@ -1,8 +1,10 @@
 # Enriched record shape (→ Supabase `recommendations`)
 
-`ticker-enricher` emits one record per ticker. These map 1:1 to the `public.recommendations`
-table (created via migration; written by `write-supabase`). The table stores **facts only** —
-`gain_loss_pct` and `days_held` are NOT stored; the UI/dashboard computes them live (see below).
+`ticker-enricher` emits one record per **(ticker, channel)** — if two channels recommend the
+same ticker, that's two rows, each with its own `recommendation_source`. These map 1:1 to the
+`public.recommendations` table (created via migration; written by `write-supabase`). The table
+stores **facts only** — `gain_loss_pct` and `days_held` are NOT stored; the UI/dashboard computes
+them live (see below).
 
 | Field | Type | Source |
 |---|---|---|
@@ -13,7 +15,8 @@ table (created via migration; written by `write-supabase`). The table stores **f
 | date_recommended | date | earliest `claim_date` for the ticker (**immutable** — frozen by trigger) |
 | price_at_recommendation | numeric | Yahoo close on date_recommended; **falls back to the current close** if that date's close isn't available yet (future-dated upload / non-trading day) so it's never null. **Immutable once set** (frozen by trigger) |
 | current_price | numeric | latest close (the only field a refresh changes) |
-| recommendation_source | text | `YouTube — <channel>` (from the source note) |
+| recommendation_source | text | A **single** channel name (e.g. `MarketBeat`, `Ross Givens`) — one row per channel that cited the ticker; keeps the conflict key stable |
+| source_type | text | Platform: `youtube` (future: `twitter`, `reddit`) |
 | source_skill | text | provenance, e.g. `social-signal-ingestor` |
 | direction | text | long / short / watch |
 | status | text | `active` |
@@ -28,7 +31,7 @@ gain_loss_pct = round((current_price - price_at_recommendation) / price_at_recom
 days_held     = current_date - date_recommended
 ```
 
-A new ticker inserts a full row; a later run only refreshes `current_price` + `last_updated`.
+A new (ticker, channel) pair inserts a full row; a later run only refreshes `current_price` + `last_updated`.
 `price_at_recommendation` / `date_recommended` can never be overwritten — a `BEFORE UPDATE`
 trigger forces them back to their original values, so the baseline (and therefore any gain
 computed from it) stays correct even if yfinance later back-adjusts historical closes for
@@ -47,6 +50,7 @@ create table if not exists public.recommendations (
   price_at_recommendation numeric,
   current_price numeric,
   recommendation_source text not null,
+  source_type text not null default 'youtube',
   source_skill text,
   direction text,
   status text not null default 'active',

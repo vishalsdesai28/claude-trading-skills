@@ -35,9 +35,10 @@ can enrich them here, and the records can be written to any table.
 python3 skills/ticker-enricher/scripts/enrich_tickers.py --agent social --output-dir reports/
 ```
 
-Groups index signals by ticker, sets `date_recommended` = earliest `claim_date`,
-`price_at_recommendation` = Yahoo close on that date, `current_price` = latest,
-resolves `recommendation_source`, and writes `reports/enriched_records_<ts>.json`:
+Groups index signals by **(ticker, channel)** — one row per channel that cited the ticker —
+sets `date_recommended` = earliest `claim_date`, `price_at_recommendation` = Yahoo close on
+that date, `current_price` = latest, `recommendation_source` = that channel's name, and writes
+`reports/enriched_records_<ts>.json`:
 
 ```json
 { "table_hint": "recommendations",
@@ -50,7 +51,7 @@ table + conflict from its own CLI). See `references/ledger-schema.md` for the fu
 
 ## Output
 
-`reports/enriched_records_<ts>.json` — one record per ticker with: ticker, company_name, sector,
+`reports/enriched_records_<ts>.json` — one record per (ticker, channel) with: ticker, company_name, sector,
 industry, date_recommended, price_at_recommendation, current_price, recommendation_source,
 source_skill, direction, status. (Gain % and days held are computed downstream by the UI.)
 

@@ -44,13 +44,20 @@ def load_index(index_path: Path) -> dict[str, Any]:
 # ----------------------------- pure transforms -----------------------------
 
 
-def group_by_ticker(index: dict[str, Any]) -> dict[str, list[dict[str, Any]]]:
-    groups: dict[str, list[dict[str, Any]]] = {}
+def group_by_ticker_channel(
+    index: dict[str, Any], vault_current: Path
+) -> dict[tuple[str, str], list[dict[str, Any]]]:
+    """Group signals by (ticker, channel) so each channel that recommends a ticker
+    becomes its own row. Keys the stable Supabase conflict tuple
+    (ticker, recommendation_source, date_recommended)."""
+    groups: dict[tuple[str, str], list[dict[str, Any]]] = {}
     for sig in index.get("signals", []):
         ticker = sig.get("ticker")
         if not isinstance(ticker, str) or not ticker.strip() or "/" in ticker or "," in ticker:
             continue  # skip blanks / multi-symbol (mirrors the ingestor's ticker_warning)
-        groups.setdefault(ticker.strip().upper(), []).append(sig)
+        t = ticker.strip().upper()
+        for channel in channels_for_signal(sig, vault_current):
+            groups.setdefault((t, channel), []).append(sig)
     return groups
 
 
@@ -67,40 +74,48 @@ def first_direction(sigs: list[dict[str, Any]]) -> str | None:
 
 
 def _channel_from_note(note_path: Path) -> str | None:
-    """Pull `channel: <name>` from a source note's frontmatter (simple line scan)."""
-    try:
-        text = note_path.read_text()
-    except OSError:
-        return None
-    in_fm = False
-    for line in text.splitlines():
-        if line.strip() == "---":
-            if in_fm:
-                break
-            in_fm = True
+    """Pull `channel: <name>` from a source note's frontmatter (simple line scan).
+
+    Falls back to glob by video_id when the exact date-prefixed path doesn't exist
+    (signal notes hand-created with a different date than the yt-dlp upload_date).
+    """
+    candidates = [note_path]
+    if not note_path.exists():
+        # e.g. ref = "sources/youtube/2026-06-29_VID123" but stub is "2026-06-27_VID123"
+        video_id = note_path.stem.split("_", 1)[-1]
+        candidates = list(note_path.parent.glob(f"*_{video_id}.md"))
+    for p in candidates:
+        try:
+            text = p.read_text()
+        except OSError:
             continue
-        if in_fm and line.startswith("channel:"):
-            return line.split(":", 1)[1].strip() or None
+        in_fm = False
+        for line in text.splitlines():
+            if line.strip() == "---":
+                if in_fm:
+                    break
+                in_fm = True
+                continue
+            if in_fm and line.startswith("channel:"):
+                return line.split(":", 1)[1].strip() or None
     return None
 
 
-def resolve_source(sigs: list[dict[str, Any]], vault_current: Path) -> str:
-    """Resolve "YouTube — <channel>[, <channel>...]" from the signals' source notes."""
-    channels: list[str] = []
-    for s in sigs:
-        for ref in s.get("sources", []) or []:
-            ch = _channel_from_note(vault_current / f"{ref}.md")
-            if ch and ch not in channels:
-                channels.append(ch)
-    if not channels:
-        return "YouTube"
-    return "YouTube — " + ", ".join(sorted(channels))
+def channels_for_signal(sig: dict[str, Any], vault_current: Path) -> list[str]:
+    """Distinct channel names a single signal cites, via its source notes.
+    Falls back to ["YouTube"] when none resolve."""
+    chans: list[str] = []
+    for ref in sig.get("sources", []) or []:
+        ch = _channel_from_note(vault_current / f"{ref}.md")
+        if ch and ch not in chans:
+            chans.append(ch)
+    return chans or ["YouTube"]
 
 
 def map_to_record(
     ticker: str,
+    channel: str,
     sigs: list[dict[str, Any]],
-    vault_current: Path,
     profile: dict[str, Any],
     price_at_rec: float | None,
     current_price: float | None,
@@ -115,7 +130,8 @@ def map_to_record(
         "date_recommended": date_rec,
         "price_at_recommendation": price_at_rec,
         "current_price": current_price,
-        "recommendation_source": resolve_source(sigs, vault_current),
+        "recommendation_source": channel,
+        "source_type": "youtube",
         "source_skill": SOURCE_SKILL,
         "direction": first_direction(sigs),
         "status": "active",
@@ -163,19 +179,21 @@ def fetch_current_price(ticker: str) -> float | None:
 def build_records(
     index: dict[str, Any], vault_current: Path, now: dt.datetime
 ) -> list[dict[str, Any]]:
-    """One enriched record per ticker (pure except the yfinance fetch fns)."""
+    """One enriched record per (ticker, channel) (pure except the yfinance fetch fns)."""
     records = []
-    for ticker, sigs in group_by_ticker(index).items():
+    profile_cache: dict[str, dict[str, Any]] = {}
+    current_cache: dict[str, float | None] = {}
+    for (ticker, channel), sigs in group_by_ticker_channel(index, vault_current).items():
         date_rec = earliest_claim_date(sigs)
-        profile = fetch_profile(ticker)
-        current = fetch_current_price(ticker)
+        if ticker not in profile_cache:  # a ticker spans multiple channel rows — fetch once
+            profile_cache[ticker] = fetch_profile(ticker)
+            current_cache[ticker] = fetch_current_price(ticker)
+        profile, current = profile_cache[ticker], current_cache[ticker]
         # Fall back to the current close when the recommendation-date close isn't available
         # (e.g. a future-dated upload_date from yt-dlp timezone skew, or a non-trading day),
         # so the baseline is never null — a just-posted call's baseline ≈ today's price.
         price_at_rec = (fetch_price_on(ticker, date_rec) if date_rec else None) or current
-        records.append(
-            map_to_record(ticker, sigs, vault_current, profile, price_at_rec, current, now)
-        )
+        records.append(map_to_record(ticker, channel, sigs, profile, price_at_rec, current, now))
     return records
 
 
