@@ -528,6 +528,18 @@ python3 skills/data-quality-checker/scripts/check_data_quality.py \
   --file report.md --as-of 2026-02-28 --output-dir reports/
 ```
 
+**Social Signal Ingestor — weekly vault reset:** No API key required
+```bash
+# Preview (no changes), then archive vault/current → vault/archive/weeks/YYYY-Www
+python3 skills/social-signal-ingestor/scripts/reset_weekly_vault.py --agent social --dry-run
+python3 skills/social-signal-ingestor/scripts/reset_weekly_vault.py --agent social
+
+# Retention overrides; idempotent per ISO week (--force to override). Leaves
+# state/youtube_state.json (seen-video dedup) untouched. Suggested cron: 0 17 * * 5 (Fri 17:00).
+python3 skills/social-signal-ingestor/scripts/reset_weekly_vault.py \
+  --agent social --keep-weeks 8 --raw-days 60
+```
+
 **Edge Strategy Reviewer:** No API key required
 ```bash
 # Review all drafts in a directory

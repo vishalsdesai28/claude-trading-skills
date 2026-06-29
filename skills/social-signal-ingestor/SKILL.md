@@ -80,6 +80,26 @@ reporting any parse errors or multi-symbol ticker warnings. Run this AFTER Step 
 
 The `data/` tree is git-ignored — raw transcripts and signals never enter the repo.
 
+## Weekly reset (keep the vault bounded)
+
+The vault grows forever otherwise — `raw/youtube` accumulates ~0.8 MB/video and signal
+notes never expire, so the index and everything downstream keep re-processing stale picks.
+Archive the week and start fresh:
+
+```bash
+python3 skills/social-signal-ingestor/scripts/reset_weekly_vault.py --agent social --dry-run  # preview
+python3 skills/social-signal-ingestor/scripts/reset_weekly_vault.py --agent social             # do it
+```
+
+Archives `vault/current` → `vault/archive/weeks/YYYY-Www`, re-inits an empty current week,
+prunes raw videos older than `--raw-days` (default 60) and week-archives beyond `--keep-weeks`
+(default 8). **Idempotent per ISO week** (a `_reset.json` marker; re-runs are no-ops unless
+`--force`). `state/youtube_state.json` is left untouched, so the seen-video dedup survives — the
+ingestor never re-fetches or re-extracts archived videos. Pure script, no LLM tokens.
+
+Schedule it weekly (e.g. cron `0 17 * * 5` — Friday 17:00 UTC). Recommendations already written
+to Supabase persist; only their live-price refresh stops once a pick ages out of the vault.
+
 ## Resources
 
 - `references/signal-schema.md` — signal-note frontmatter spec.
