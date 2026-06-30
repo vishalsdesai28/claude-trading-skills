@@ -70,3 +70,72 @@ def test_multi_symbol_ticker_is_flagged(tmp_path):
 
     assert len(index["ticker_warnings"]) == 1
     assert "STRL/POWL" in index["ticker_warnings"][0]["warning"]
+
+
+SIGNAL_OPTION_OK = """---
+title: NVDA call debit spread
+type: signal
+ticker: NVDA
+direction: long
+instrument: option
+option_strategy: call_debit_spread
+option_legs:
+  - {side: buy, right: call, strike: 120.0, expiry: 2026-07-18, ratio: 1}
+  - {side: sell, right: call, strike: 130.0, expiry: 2026-07-18, ratio: 1}
+net_premium: 3.50
+---
+"""
+
+SIGNAL_OPTION_BAD = """---
+title: NVDA option, no legs
+type: signal
+ticker: NVDA
+direction: long
+instrument: option
+option_strategy: long_call
+---
+"""
+
+SIGNAL_OPTION_MISLABELED = """---
+title: stock note carrying option detail
+type: signal
+ticker: NVDA
+direction: long
+option_strategy: long_call
+---
+"""
+
+
+def test_valid_option_note_indexes_clean(tmp_path):
+    sig_dir = tmp_path / "signals"
+    sig_dir.mkdir()
+    _write(sig_dir, "2026-06-22_NVDA_spread.md", SIGNAL_OPTION_OK)
+
+    index = build_index(sig_dir, now=NOW)
+
+    assert index["option_warnings"] == []
+    sig = index["signals"][0]
+    assert sig["instrument"] == "option"
+    assert len(sig["option_legs"]) == 2 and sig["net_premium"] == 3.50
+
+
+def test_option_note_without_legs_is_flagged(tmp_path):
+    sig_dir = tmp_path / "signals"
+    sig_dir.mkdir()
+    _write(sig_dir, "2026-06-22_NVDA_bad.md", SIGNAL_OPTION_BAD)
+
+    index = build_index(sig_dir, now=NOW)
+
+    assert len(index["option_warnings"]) == 1
+    assert "option_legs is missing" in index["option_warnings"][0]["warning"]
+
+
+def test_option_fields_on_non_option_note_are_flagged(tmp_path):
+    sig_dir = tmp_path / "signals"
+    sig_dir.mkdir()
+    _write(sig_dir, "2026-06-22_NVDA_mislabel.md", SIGNAL_OPTION_MISLABELED)
+
+    index = build_index(sig_dir, now=NOW)
+
+    assert len(index["option_warnings"]) == 1
+    assert "not 'option'" in index["option_warnings"][0]["warning"]

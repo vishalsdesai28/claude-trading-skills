@@ -58,7 +58,13 @@ For every entry in the report's `new_videos`:
 4. Add a `watch` block only when the source gives clean numeric trigger/invalidation
    levels. Conviction is computed downstream from recency and corroboration, so there
    is no confidence field to set — just be accurate about `claim_date` and `sources`.
-5. Never invent a ticker for a theme with no instrument; never join symbols
+5. If the video calls an **options** trade, set `instrument: option`, name the
+   `option_strategy` (e.g. `long_call`, `put_credit_spread`), and add one `option_legs`
+   entry per leg (`{side, right, strike, expiry, ratio}`); set `net_premium` only when the
+   source states the trade's cost. Plain stock picks need none of these — `instrument`
+   defaults to `stock`. Capture only what the source actually states; never invent strikes,
+   expiries, or premiums.
+6. Never invent a ticker for a theme with no instrument; never join symbols
    (`STRL/POWL`) into one note.
 
 ### Step 3 — Rebuild the machine index (deterministic)

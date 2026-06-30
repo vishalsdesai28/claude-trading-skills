@@ -73,6 +73,35 @@ def ticker_warning(ticker: Any) -> str | None:
     return None
 
 
+_LEG_SIDES = {"buy", "sell"}
+_LEG_RIGHTS = {"call", "put"}
+
+
+def option_warning(fm: dict[str, Any]) -> str | None:
+    """Flag option notes whose legs a downstream consumer can't use. Warnings, not
+    failures — the signal still indexes, the operator just gets told it's malformed."""
+    legs = fm.get("option_legs")
+    if fm.get("instrument") != "option":
+        # Option detail on a note not marked as an option → likely mislabeled.
+        if legs or fm.get("option_strategy") or fm.get("net_premium") is not None:
+            return "option fields set but instrument is not 'option'"
+        return None
+    if not isinstance(legs, list) or not legs:
+        return "instrument is 'option' but option_legs is missing or empty"
+    for i, leg in enumerate(legs):
+        if not isinstance(leg, dict):
+            return f"option_legs[{i}] is not a mapping"
+        if leg.get("side") not in _LEG_SIDES:
+            return f"option_legs[{i}].side must be buy/sell, got {leg.get('side')!r}"
+        if leg.get("right") not in _LEG_RIGHTS:
+            return f"option_legs[{i}].right must be call/put, got {leg.get('right')!r}"
+        if not isinstance(leg.get("strike"), (int, float)) or isinstance(leg.get("strike"), bool):
+            return f"option_legs[{i}].strike must be numeric, got {leg.get('strike')!r}"
+        if not leg.get("expiry"):
+            return f"option_legs[{i}] missing expiry"
+    return None
+
+
 def compact_signal(fm: dict[str, Any], path: Path, signals_dir: Path) -> dict[str, Any]:
     signal = {
         "path": str(path.relative_to(signals_dir)),
@@ -100,6 +129,7 @@ def build_index(signals_dir: Path, now: dt.datetime | None = None) -> dict[str, 
     signals: list[dict[str, Any]] = []
     parse_errors: list[dict[str, Any]] = []
     ticker_warnings: list[dict[str, Any]] = []
+    option_warnings: list[dict[str, Any]] = []
     for path in sorted(signals_dir.glob("*.md")):
         try:
             fm = parse_frontmatter(path.read_text())
@@ -111,6 +141,9 @@ def build_index(signals_dir: Path, now: dt.datetime | None = None) -> dict[str, 
         warning = ticker_warning(fm.get("ticker"))
         if warning:
             ticker_warnings.append({"path": path.name, "warning": warning})
+        ow = option_warning(fm)
+        if ow:
+            option_warnings.append({"path": path.name, "warning": ow})
         signals.append(compact_signal(fm, path, signals_dir))
     return {
         "generated_at": now.isoformat(),
@@ -119,6 +152,7 @@ def build_index(signals_dir: Path, now: dt.datetime | None = None) -> dict[str, 
         "signals": signals,
         "parse_errors": parse_errors,
         "ticker_warnings": ticker_warnings,
+        "option_warnings": option_warnings,
     }
 
 
@@ -148,6 +182,8 @@ def main() -> int:
                 "parse_errors": index["parse_errors"],
                 "ticker_warning_count": len(index["ticker_warnings"]),
                 "ticker_warnings": index["ticker_warnings"],
+                "option_warning_count": len(index["option_warnings"]),
+                "option_warnings": index["option_warnings"],
             },
             indent=2,
             sort_keys=True,
