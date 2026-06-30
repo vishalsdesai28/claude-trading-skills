@@ -52,3 +52,7 @@ youtube:
       url: https://www.youtube.com/@OptionsWithRyan/videos
       enabled: true
       notes: Options trading and market commentary from Options with Ryan.
+    - name: stockup-with-larry-jones
+      url: https://www.youtube.com/@STOCKUPwithLarryJones/videos
+      enabled: true
+      notes: Trading and market commentary from STOCK UP with Larry Jones.
