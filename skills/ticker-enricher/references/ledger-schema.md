@@ -6,19 +6,26 @@ same ticker, that's two rows, each with its own `recommendation_source`. These m
 stores **facts only** — `gain_loss_pct` and `days_held` are NOT stored; the UI/dashboard computes
 them live (see below).
 
+Columns in table order (see the migration for the authoritative DDL):
+
 | Field | Type | Source |
 |---|---|---|
+| id | uuid | generated |
 | ticker | text | index (uppercased) |
 | company_name | text | yfinance `.info` longName |
 | sector | text | yfinance sector |
 | industry | text | yfinance industry |
-| date_recommended | date | earliest `claim_date` for the ticker (**immutable** — frozen by trigger) |
-| price_at_recommendation | numeric | Yahoo close on date_recommended; **falls back to the current close** if that date's close isn't available yet (future-dated upload / non-trading day) so it's never null. **Immutable once set** (frozen by trigger) |
-| current_price | numeric | latest close (the only field a refresh changes) |
 | recommendation_source | text | A **single** channel name (e.g. `MarketBeat`, `Ross Givens`) — one row per channel that cited the ticker; keeps the conflict key stable |
 | source_type | text | Platform: `youtube` (future: `twitter`, `reddit`) |
 | source_skill | text | provenance, e.g. `social-signal-ingestor` |
+| date_recommended | date | earliest `claim_date` for the ticker (**immutable** — frozen by trigger) |
 | direction | text | long / short / watch |
+| instrument_type | text | `stock` (default) or `option` — from the note's `instrument` field |
+| option_strategy | text | option play when `instrument_type = option` (e.g. `long_call`, `covered_call`); null for stock |
+| option_legs | jsonb | one object per leg `{side, right, strike, expiry, ratio}`; multi-leg spreads stored in full; null for stock |
+| net_premium | numeric | net debit (+) / credit (−) at recommendation — the option's P&L baseline (`price_at_recommendation` tracks the underlying, not the option); null for stock |
+| price_at_recommendation | numeric | Yahoo close on date_recommended; **falls back to the current close** if that date's close isn't available yet (future-dated upload / non-trading day) so it's never null. **Immutable once set** (frozen by trigger) |
+| current_price | numeric | latest close (the only field a refresh changes) |
 | status | text | `active` |
 | last_updated | timestamptz | run time |
 
@@ -37,41 +44,8 @@ trigger forces them back to their original values, so the baseline (and therefor
 computed from it) stays correct even if yfinance later back-adjusts historical closes for
 splits/dividends.
 
-## Schema SQL (migrations; already applied)
+## Schema SQL
 
-```sql
-create table if not exists public.recommendations (
-  id uuid primary key default gen_random_uuid(),
-  ticker text not null,
-  company_name text,
-  sector text,
-  industry text,
-  date_recommended date not null,
-  price_at_recommendation numeric,
-  current_price numeric,
-  recommendation_source text not null,
-  source_type text not null default 'youtube',
-  source_skill text,
-  direction text,
-  status text not null default 'active',
-  last_updated timestamptz not null default now(),
-  constraint recommendations_unique unique (ticker, recommendation_source, date_recommended)
-);
-alter table public.recommendations enable row level security;
-
--- Baseline is immutable: any UPDATE keeps the original recommendation price + date.
-create or replace function public.freeze_recommendation_baseline() returns trigger as $$
-begin
-  -- Freeze the baseline only once set: allow null -> value (backfill), block value -> change.
-  if old.price_at_recommendation is not null then
-    new.price_at_recommendation := old.price_at_recommendation;
-  end if;
-  new.date_recommended := old.date_recommended;
-  return new;
-end;
-$$ language plpgsql;
-
-create trigger trg_freeze_recommendation_baseline
-  before update on public.recommendations
-  for each row execute function public.freeze_recommendation_baseline();
-```
+Authoritative DDL (table, constraints, RLS, immutability trigger) lives in
+[`supabase/migrations/20260630010000_recommendations_schema.sql`](../../../supabase/migrations/20260630010000_recommendations_schema.sql).
+Kept there only, so the schema can't drift between two copies.

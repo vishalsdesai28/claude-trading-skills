@@ -85,7 +85,10 @@ def compact_signal(fm: dict[str, Any], path: Path, signals_dir: Path) -> dict[st
         "claim_date": fm.get("claim_date"),
         "updated": fm.get("updated"),
         "watch": fm.get("watch"),
-        "options": fm.get("options"),
+        "instrument": fm.get("instrument"),          # stock | option (default stock downstream)
+        "option_strategy": fm.get("option_strategy"),  # e.g. long_call, covered_call (option only)
+        "option_legs": fm.get("option_legs"),         # list of {side,right,strike,expiry,ratio} (option only)
+        "net_premium": fm.get("net_premium"),         # net debit(+)/credit(-) at recommendation (option only)
         "sources": normalize_sources(fm.get("sources")),
     }
     return signal

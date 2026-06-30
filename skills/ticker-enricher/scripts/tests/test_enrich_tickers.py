@@ -78,7 +78,45 @@ def test_build_records_full_row(tmp_path, monkeypatch):
     assert r["recommendation_source"] == "Stocks with Josh"
     assert r["source_skill"] == "social-signal-ingestor"
     assert r["direction"] == "long"
+    assert r["instrument_type"] == "stock"  # default when frontmatter omits `instrument`
+    assert r["option_strategy"] is None
+    assert r["option_legs"] is None
+    assert r["net_premium"] is None
     assert r["status"] == "active"
+
+
+def test_build_records_carries_option_fields(tmp_path, monkeypatch):
+    note_dir = tmp_path / "sources" / "youtube"
+    note_dir.mkdir(parents=True)
+    (note_dir / "2026-06-22_VID.md").write_text("---\nchannel: Options with Ryan\n---\n")
+    idx = {
+        "signals": [
+            {
+                "ticker": "NVDA",
+                "direction": "long",
+                "instrument": "option",
+                "option_strategy": "call_debit_spread",
+                "option_legs": [
+                    {"side": "buy", "right": "call", "strike": 120, "expiry": "2026-07-18", "ratio": 1},
+                    {"side": "sell", "right": "call", "strike": 130, "expiry": "2026-07-18", "ratio": 1},
+                ],
+                "net_premium": 3.50,
+                "claim_date": "2026-06-22",
+                "sources": ["sources/youtube/2026-06-22_VID"],
+            }
+        ]
+    }
+    monkeypatch.setattr(
+        et, "fetch_profile", lambda t: {"company_name": "NVIDIA", "sector": "x", "industry": "y"}
+    )
+    monkeypatch.setattr(et, "fetch_price_on", lambda t, d: 120.0)
+    monkeypatch.setattr(et, "fetch_current_price", lambda t: 130.0)
+
+    r = et.build_records(idx, tmp_path, NOW)[0]
+    assert r["instrument_type"] == "option"
+    assert r["option_strategy"] == "call_debit_spread"
+    assert len(r["option_legs"]) == 2 and r["option_legs"][0]["strike"] == 120
+    assert r["net_premium"] == 3.50
 
 
 def test_build_records_splits_by_channel(tmp_path, monkeypatch):

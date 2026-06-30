@@ -53,7 +53,8 @@ table + conflict from its own CLI). See `references/ledger-schema.md` for the fu
 
 `reports/enriched_records_<ts>.json` — one record per (ticker, channel) with: ticker, company_name, sector,
 industry, date_recommended, price_at_recommendation, current_price, recommendation_source,
-source_skill, direction, status. (Gain % and days held are computed downstream by the UI.)
+source_skill, direction, instrument_type (`stock`/`option`), option_strategy, option_legs (jsonb),
+net_premium, status. (Gain % and days held are computed downstream by the UI.)
 
 ## Resources
 

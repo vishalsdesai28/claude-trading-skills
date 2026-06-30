@@ -66,10 +66,11 @@ def earliest_claim_date(sigs: list[dict[str, Any]]) -> str | None:
     return min(dates) if dates else None
 
 
-def first_direction(sigs: list[dict[str, Any]]) -> str | None:
+def first_value(sigs: list[dict[str, Any]], key: str) -> str | None:
+    """First non-empty value of `key` across the grouped signals."""
     for s in sigs:
-        if s.get("direction"):
-            return s["direction"]
+        if s.get(key):
+            return s[key]
     return None
 
 
@@ -133,7 +134,11 @@ def map_to_record(
         "recommendation_source": channel,
         "source_type": "youtube",
         "source_skill": SOURCE_SKILL,
-        "direction": first_direction(sigs),
+        "direction": first_value(sigs, "direction"),
+        "instrument_type": first_value(sigs, "instrument") or "stock",
+        "option_strategy": first_value(sigs, "option_strategy"),
+        "option_legs": first_value(sigs, "option_legs"),  # jsonb list of legs; null for stock
+        "net_premium": first_value(sigs, "net_premium"),  # net debit(+)/credit(-); null for stock
         "status": "active",
         "last_updated": now.isoformat(),
     }
