@@ -2,7 +2,7 @@
 
 import datetime as dt
 
-from build_signal_index import build_index
+from build_signal_index import build_index, build_last_index
 
 NOW = dt.datetime(2026, 6, 22, tzinfo=dt.timezone.utc)
 
@@ -104,6 +104,30 @@ direction: long
 option_strategy: long_call
 ---
 """
+
+
+def test_last_index_holds_only_records_new_since_prev(tmp_path):
+    sig_dir = tmp_path / "signals"
+    sig_dir.mkdir()
+    _write(sig_dir, "2026-06-21_NVDA_ai.md", SIGNAL_NVDA)
+
+    # First run: no prior index → NVDA is new.
+    index = build_index(sig_dir, now=NOW)
+    first = build_last_index(index, prev_paths=set())
+    assert [s["path"] for s in first["signals"]] == ["2026-06-21_NVDA_ai.md"]
+    assert first["signal_count"] == 1
+
+    # Second run: a fresh multi-symbol note is added; NVDA carries over.
+    prev_paths = {s["path"] for s in index["signals"]}  # {NVDA}
+    _write(sig_dir, "2026-06-22_BASKET.md", SIGNAL_MULTI)
+    reindex = build_index(sig_dir, now=NOW)
+    last = build_last_index(reindex, prev_paths=prev_paths)
+    assert [s["path"] for s in last["signals"]] == ["2026-06-22_BASKET.md"]  # only the delta
+    assert last["signal_count"] == 1
+    assert reindex["signal_count"] == 2  # full index stays cumulative
+    # The new note's ticker warning travels with it; NVDA's (there is none) does not leak in.
+    assert len(last["ticker_warnings"]) == 1
+    assert last["ticker_warnings"][0]["path"] == "2026-06-22_BASKET.md"
 
 
 def test_valid_option_note_indexes_clean(tmp_path):

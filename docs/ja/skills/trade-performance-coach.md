@@ -3,7 +3,7 @@ layout: default
 title: "Trade Performance Coach"
 grand_parent: 日本語
 parent: スキルガイド
-nav_order: 53
+nav_order: 57
 lang_peer: /en/skills/trade-performance-coach/
 permalink: /ja/skills/trade-performance-coach/
 generated: true

@@ -3,7 +3,7 @@ layout: default
 title: "Scenario Analyzer"
 grand_parent: 日本語
 parent: スキルガイド
-nav_order: 42
+nav_order: 44
 lang_peer: /en/skills/scenario-analyzer/
 permalink: /ja/skills/scenario-analyzer/
 generated: true

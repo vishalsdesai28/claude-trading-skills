@@ -73,16 +73,24 @@ For every entry in the report's `new_videos`:
 python3 skills/social-signal-ingestor/scripts/build_signal_index.py --agent social
 ```
 
-Scans the signal notes and writes `data/social/vault/current/signals/index.json`,
-reporting any parse errors or multi-symbol ticker warnings. Run this AFTER Step 2.
+Scans the signal notes and writes two files, reporting any parse errors or multi-symbol
+ticker warnings. Run this AFTER Step 2.
+
+- `signals/index.json` — the full week's signals (cumulative; notes accumulate in the vault
+  until the weekly reset). Consumed by `edge-social-aggregator` and for tracking.
+- `signals/index_last.json` — only the records new since the previous `index.json` (this run's
+  delta), overwritten each run. Consumed by `robinhood-trade-executor` so it buys only the fresh
+  picks, not the whole week's accumulation. Same schema as `index.json`.
 
 ## Output
 
 - `data/<agent>/raw/youtube/...` — immutable transcripts + metadata.
 - `data/<agent>/vault/current/sources/youtube/*.md` — one source note per video.
 - `data/<agent>/vault/current/signals/*.md` — one signal note per ticker.
-- `data/<agent>/vault/current/signals/index.json` — the machine contract consumed by
+- `data/<agent>/vault/current/signals/index.json` — the full-week machine contract consumed by
   `edge-social-aggregator`.
+- `data/<agent>/vault/current/signals/index_last.json` — this run's new records only (same
+  schema), consumed by `robinhood-trade-executor`.
 
 The `data/` tree is git-ignored — raw transcripts and signals never enter the repo.
 
@@ -114,6 +122,4 @@ to Supabase persist; only their live-price refresh stops once a pick ages out of
 ## Notes & Risk
 
 - `yt-dlp` scrapes public YouTube subtitles; YouTube rate-limits (HTTP 429). Keep
-  `playlist_items` small. For higher volume, move to the YouTube Data API (key in 1Password).
-- X / Reddit are deferred: add `fetch_x()` / `fetch_reddit()` backends that shell out to
-  Agent-Reach (`twitter-cli`, `rdt-cli`), gated by `agent-reach doctor`.
+  `playlist_items` small.

@@ -3,7 +3,7 @@ layout: default
 title: "Ticker Enricher"
 grand_parent: English
 parent: Skill Guides
-nav_order: 11
+nav_order: 55
 lang_peer: /ja/skills/ticker-enricher/
 permalink: /en/skills/ticker-enricher/
 generated: true
@@ -72,9 +72,10 @@ python3 skills/ticker-enricher/scripts/enrich_tickers.py --agent social --output
 python3 skills/ticker-enricher/scripts/enrich_tickers.py --agent social --output-dir reports/
 ```
 
-Groups index signals by ticker, sets `date_recommended` = earliest `claim_date`,
-`price_at_recommendation` = Yahoo close on that date, `current_price` = latest,
-resolves `recommendation_source`, and writes `reports/enriched_records_<ts>.json`:
+Groups index signals by **(ticker, channel)** — one row per channel that cited the ticker —
+sets `date_recommended` = earliest `claim_date`, `price_at_recommendation` = Yahoo close on
+that date, `current_price` = latest, `recommendation_source` = that channel's name, and writes
+`reports/enriched_records_<ts>.json`:
 
 ```json
 { "table_hint": "recommendations",

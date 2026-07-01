@@ -165,6 +165,7 @@ The detailed catalog below is **auto-generated** from `skills-index.yaml` by `sc
 | Skill | Summary | Integrations | Status |
 |---|---|---|---|
 | **Position Sizer** (`position-sizer`) | Calculate risk-based position sizes for long stock trades. | `local_calculation` — | production |
+| **Robinhood Trade Executor** (`robinhood-trade-executor`) | Place automated $50 market buys on Robinhood for newly-identified long-stock signals from the social-signal-daily pipeline. Reads enriched_records, keeps long stock only (skips options, shorts, watch), buys one $50 position per ticker not already held, and writes an order-confirmations report. Real-money, fully automated, no human gate. | `robinhood` **required**, `local_calculation` — | beta |
 | **Technical Analyst** (`technical-analyst`) | This skill should be used when analyzing weekly price charts for stocks, stock indices, cryptocurrencies, or forex pairs. | `chart_image` **required** | production |
 | **US Stock Analysis** (`us-stock-analysis`) | Comprehensive US stock analysis including fundamental analysis (financial metrics, business quality, valuation), technical analysis (indicators, chart patterns, support/resistance), stock comparisons, and investment report generation. | `user_input` **required** | production |
 

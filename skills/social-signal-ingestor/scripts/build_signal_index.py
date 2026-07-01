@@ -2,8 +2,14 @@
 """Build a machine-readable index of this week's social signal notes.
 
 Deterministically scans data/<agent>/vault/current/signals/*.md frontmatter and
-writes signals/index.json — the machine contract that edge-social-aggregator
-consumes. Run this AFTER the extraction step has written/updated signal notes.
+writes two files, both AFTER the extraction step has written/updated signal notes:
+
+- signals/index.json — the full week's signals (cumulative, since notes accumulate
+  in the vault until the weekly reset). Consumed by edge-social-aggregator and for tracking.
+- signals/index_last.json — only the records new since the previous index.json (this run's
+  delta), overwritten each run. Consumed by robinhood-trade-executor so it buys only the
+  fresh picks, not the whole week's accumulation.
+
 `direction` is included so the aggregator can read it without re-parsing.
 """
 
@@ -156,6 +162,35 @@ def build_index(signals_dir: Path, now: dt.datetime | None = None) -> dict[str, 
     }
 
 
+def load_prev_signal_paths(index_path: Path) -> set[str]:
+    """Note paths recorded in an existing index.json (empty if absent/unreadable)."""
+    if not index_path.exists():
+        return set()
+    try:
+        prev = json.loads(index_path.read_text())
+    except (json.JSONDecodeError, OSError):
+        return set()  # ponytail: unreadable prior index → treat everything as new this run
+    return {s.get("path") for s in prev.get("signals", []) if isinstance(s, dict)}
+
+
+def build_last_index(index: dict[str, Any], prev_paths: set[str]) -> dict[str, Any]:
+    """Subset of `index` holding only records whose note wasn't in the previous index —
+    i.e. what this run newly added. Same schema; overwritten each run for the executor."""
+
+    def is_new(entry: dict[str, Any]) -> bool:
+        return entry.get("path") not in prev_paths
+
+    signals = [s for s in index["signals"] if is_new(s)]
+    return {
+        **index,
+        "signal_count": len(signals),
+        "signals": signals,
+        "parse_errors": [e for e in index["parse_errors"] if is_new(e)],
+        "ticker_warnings": [w for w in index["ticker_warnings"] if is_new(w)],
+        "option_warnings": [w for w in index["option_warnings"] if is_new(w)],
+    }
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(
         description="Build signals/index.json from vault signal notes."
@@ -169,15 +204,25 @@ def main() -> int:
     args = parser.parse_args()
 
     signals_dir = resolve_signals_dir(args.agent, args.data_dir)
-    index = build_index(signals_dir)
     out_path = signals_dir / "index.json"
+    # Snapshot the prior index before overwriting, so index_last.json can carry just this run's delta.
+    prev_paths = load_prev_signal_paths(out_path)
+
+    index = build_index(signals_dir)
     out_path.write_text(json.dumps(index, indent=2, sort_keys=True, default=str))
+
+    last = build_last_index(index, prev_paths)
+    last_path = signals_dir / "index_last.json"
+    last_path.write_text(json.dumps(last, indent=2, sort_keys=True, default=str))
+
     print(
         json.dumps(
             {
                 "message": "signal index built",
                 "path": str(out_path),
+                "last_path": str(last_path),
                 "signal_count": index["signal_count"],
+                "added_count": last["signal_count"],
                 "parse_error_count": len(index["parse_errors"]),
                 "parse_errors": index["parse_errors"],
                 "ticker_warning_count": len(index["ticker_warnings"]),

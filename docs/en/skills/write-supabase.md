@@ -3,7 +3,7 @@ layout: default
 title: "Write Supabase"
 grand_parent: English
 parent: Skill Guides
-nav_order: 11
+nav_order: 63
 lang_peer: /ja/skills/write-supabase/
 permalink: /en/skills/write-supabase/
 generated: true
@@ -46,8 +46,10 @@ reuse it — `ticker-enricher → write-supabase --table recommendations`, a scr
 
 ## 3. Prerequisites
 
-- `SUPABASE_URL` + `SUPABASE_SERVICE_KEY` in the environment. Auto-loaded from a repo-root `.env`
-  if present (so `python3 …` works without `source .env`); also honors a real exported env / cloud vault.
+- `SUPABASE_URL` + a Supabase secret key — any of `SUPABASE_SERVICE_KEY`, `SUPABASE_SECRET_KEY`,
+  `SUPABASE_SECRETS_KEY`, `SUPABASE_SERVICE_ROLE_KEY` (Supabase's newer "secret" key naming is
+  accepted). Auto-loaded from a repo-root `.env` if present (so `python3 …` works without
+  `source .env`); also honors a real exported env / cloud vault.
 - The target table must already exist (create it via a Supabase migration).
 - `requests` (already a repo dependency).
 

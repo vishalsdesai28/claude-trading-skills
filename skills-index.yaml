@@ -761,6 +761,31 @@ skills:
   - risk_amount
   workflows:
   - swing-opportunity-daily
+- id: robinhood-trade-executor
+  display_name: Robinhood Trade Executor
+  category: trade-planning
+  status: beta
+  summary: Place automated fixed-notional market buys on Robinhood for newly-identified long-stock
+    signals from the social-signal-daily pipeline. Reads social-signal-ingestor's signals/index.json,
+    keeps long stock only (skips options, shorts, watch, and not-yet-triggered setups), buys one
+    caller-specified position per ticker not already held via the Robinhood MCP connector, and
+    writes an order-confirmations report. Real-money, fully automated, no human gate.
+  timeframe: event-driven
+  difficulty: advanced
+  integrations:
+  - id: robinhood
+    type: broker
+    requirement: required
+    note: Robinhood MCP connector (Robinhood Agentic Trading, agent.robinhood.com) place_equity_order
+      for fixed-notional long-stock buys; trusts the upstream selection with no portfolio/tradability
+      pre-checks. Buy-candidate selection is interpreted inline from the social-signal-ingestor index
+      (no local script).
+  inputs:
+  - social_signal_index
+  outputs:
+  - order_confirmations
+  workflows:
+  - social-signal-daily
 - id: scenario-analyzer
   display_name: Scenario Analyzer
   category: strategy-research

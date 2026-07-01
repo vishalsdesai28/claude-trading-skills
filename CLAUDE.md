@@ -257,6 +257,7 @@ The table below is **auto-generated** from `skills-index.yaml` by `scripts/gener
 | **Parabolic Short Trade Planner** | ✅ Required | ❌ Not used | 🟡 Optional | Financial Modeling Prep API |
 | **Portfolio Manager** | ❌ Not used | ❌ Not used | ✅ Required | Alpaca brokerage MCP/API |
 | **Position Sizer** | ❌ Not used | ❌ Not used | ❌ Not used | Pure calculation; works offline |
+| **Robinhood Trade Executor** | ❌ Not used | ❌ Not used | ❌ Not used | Robinhood MCP trading tools (agent.robinhood.com/mcp/trading) for $50 notional equity buys; held-position lookup for dedup; Long-stock buy-candidate filter (select_buy_candidates.py) runs locally |
 | **Scenario Analyzer** | ❌ Not used | ❌ Not used | ❌ Not used | Headline / news search via WebSearch |
 | **Sector Analyst** | ❌ Not used | ❌ Not used | ❌ Not used | Chart screenshot input |
 | **Signal Postmortem** | ❌ Not used | ❌ Not used | ❌ Not used | Postmortem framework; pure calculation |
