@@ -165,6 +165,7 @@ The detailed catalog below is **auto-generated** from `skills-index.yaml` by `sc
 | Skill | Summary | Integrations | Status |
 |---|---|---|---|
 | **Position Sizer** (`position-sizer`) | Calculate risk-based position sizes for long stock trades. | `local_calculation` — | production |
+| **Robinhood Trade Executor** (`robinhood-trade-executor`) | Place automated $50 market buys on Robinhood for newly-identified long-stock signals from the social-signal-daily pipeline. Reads enriched_records, keeps long stock only (skips options, shorts, watch), buys one $50 position per ticker not already held, and writes an order-confirmations report. Real-money, fully automated, no human gate. | `robinhood` **required**, `local_calculation` — | beta |
 | **Technical Analyst** (`technical-analyst`) | This skill should be used when analyzing weekly price charts for stocks, stock indices, cryptocurrencies, or forex pairs. | `chart_image` **required** | production |
 | **US Stock Analysis** (`us-stock-analysis`) | Comprehensive US stock analysis including fundamental analysis (financial metrics, business quality, valuation), technical analysis (indicators, chart patterns, support/resistance), stock comparisons, and investment report generation. | `user_input` **required** | production |
 
@@ -188,11 +189,14 @@ The detailed catalog below is **auto-generated** from `skills-index.yaml` by `sc
 | **Edge Hint Extractor** (`edge-hint-extractor`) | Extract edge hints from daily market observations and news reactions, with optional LLM ideation, and output canonical hints.yaml for downstream concept synthesis and auto detection. | `local_calculation` — | production |
 | **Edge Pipeline Orchestrator** (`edge-pipeline-orchestrator`) | Orchestrate the full edge research pipeline from candidate detection through strategy design, review, revision, and export. | `local_calculation` — | production |
 | **Edge Signal Aggregator** (`edge-signal-aggregator`) | Aggregate and rank signals from multiple edge-finding skills (edge-candidate-agent, theme-detector, sector-analyst, institutional-flow-tracker) into a prioritized conviction dashboard with weighted scoring, deduplication, and contradicti... | `local_calculation` — | production |
+| **Edge Social Aggregator** (`edge-social-aggregator`) | Score and consolidate social trading signals (YouTube/X/Reddit) from social-signal-ingestor into a per-ticker feed for edge-signal-aggregator, applying recency x corroboration (source-count) scoring and deduping each ticker across videos. Does not redo cross-source merge or ranking. | `local_calculation` — | beta |
 | **Edge Strategy Designer** (`edge-strategy-designer`) | Convert abstract edge concepts into strategy draft variants and optional exportable ticket YAMLs for edge-candidate-agent export/validation. | `local_calculation` — | production |
 | **Edge Strategy Reviewer** (`edge-strategy-reviewer`) | Critically review strategy drafts from edge-strategy-designer for edge plausibility, overfitting risk, sample size adequacy, and execution realism. | `local_calculation` — | production |
 | **Scenario Analyzer** (`scenario-analyzer`) | Analyze 18-month scenarios from news headlines via scenario-analyst agent with strategy-reviewer second opinion; outputs primary/secondary/tertiary impact analysis and stock picks. | `websearch` **required** | production |
+| **Social Signal Ingestor** (`social-signal-ingestor`) | Ingest trading signals from YouTube channels via yt-dlp transcripts, extract one structured signal note per ticker into a local vault, and emit a machine-readable signal index for the edge pipeline. YouTube is v1; X/Reddit plug in later via Agent-Reach. | `youtube` **required**, `local_calculation` — | beta |
 | **Stanley Druckenmiller Investment** (`stanley-druckenmiller-investment`) | Druckenmiller Strategy Synthesizer - Integrates 8 upstream skill outputs (Market Breadth, Uptrend Analysis, Market Top, Macro Regime, FTD Detector, VCP Screener, Theme Detector, CANSLIM Screener) into a unified conviction score (0-100),... | `local_calculation` — | production |
 | **Strategy Pivot Designer** (`strategy-pivot-designer`) | Detect backtest iteration stagnation and generate structurally different strategy pivot proposals when parameter tuning reaches a local optimum. | `local_calculation` — | production |
+| **Ticker Enricher** (`ticker-enricher`) | Enrich ticker signals with company name / sector / industry and recommendation-date + current price via Yahoo Finance, and emit a records file for a generic writer such as write-supabase (the dashboard derives gain percent and days held). Reusable by any producer with tickers. | `yahoo_finance` **required**, `local_calculation` — | beta |
 
 ### Advanced Satellite
 
@@ -217,6 +221,7 @@ The detailed catalog below is **auto-generated** from `skills-index.yaml` by `sc
 | **Skill Idea Miner** (`skill-idea-miner`) | Mine Claude Code session logs for skill idea candidates. | `local_calculation` — | production |
 | **Skill Integration Tester** (`skill-integration-tester`) | Validate multi-skill workflows defined in CLAUDE.md by checking skill existence, inter-skill data contracts (JSON schema compatibility), file naming conventions, and handoff integrity. | `local_calculation` — | production |
 | **Trading Skills Navigator** (`trading-skills-navigator`) | Recommend the right workflow, skillset, API profile, and setup path from a natural-language trading goal. | `local_calculation` — | production |
+| **Write Supabase** (`write-supabase`) | Generic Supabase table writer. Reads a records JSON file and upserts or inserts the rows into a caller-named Supabase table with a caller-supplied conflict key. Domain-agnostic and reusable by any workflow that needs to persist records to Supabase. | `supabase` **required** | beta |
 <!-- skills-index:end name="catalog-en" -->
 
 ## Additional Workflow Examples

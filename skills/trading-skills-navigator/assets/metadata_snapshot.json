@@ -264,6 +264,22 @@
     },
     {
       "category": "strategy-research",
+      "difficulty": "intermediate",
+      "display_name": "Edge Social Aggregator",
+      "id": "edge-social-aggregator",
+      "integrations": [
+        {
+          "id": "local_calculation",
+          "requirement": "not_required",
+          "type": "calculation"
+        }
+      ],
+      "status": "beta",
+      "summary": "Score and consolidate social trading signals (YouTube/X/Reddit) from social-signal-ingestor into a per-ticker feed for edge-signal-aggregator, applying recency x corroboration (source-count) scoring and deduping each ticker across videos. Does not redo cross-source merge or ranking.",
+      "timeframe": "daily"
+    },
+    {
+      "category": "strategy-research",
       "difficulty": "advanced",
       "display_name": "Edge Strategy Designer",
       "id": "edge-strategy-designer",
@@ -706,6 +722,27 @@
     },
     {
       "category": "strategy-research",
+      "difficulty": "intermediate",
+      "display_name": "Social Signal Ingestor",
+      "id": "social-signal-ingestor",
+      "integrations": [
+        {
+          "id": "youtube",
+          "requirement": "required",
+          "type": "web"
+        },
+        {
+          "id": "local_calculation",
+          "requirement": "not_required",
+          "type": "calculation"
+        }
+      ],
+      "status": "beta",
+      "summary": "Ingest trading signals from YouTube channels via yt-dlp transcripts, extract one structured signal note per ticker into a local vault, and emit a machine-readable signal index for the edge pipeline. YouTube is v1; X/Reddit plug in later via Agent-Reach.",
+      "timeframe": "daily"
+    },
+    {
+      "category": "strategy-research",
       "difficulty": "advanced",
       "display_name": "Stanley Druckenmiller Investment",
       "id": "stanley-druckenmiller-investment",
@@ -798,6 +835,27 @@
       "status": "production",
       "summary": "Detect and analyze trending market themes across sectors.",
       "timeframe": "weekly"
+    },
+    {
+      "category": "strategy-research",
+      "difficulty": "intermediate",
+      "display_name": "Ticker Enricher",
+      "id": "ticker-enricher",
+      "integrations": [
+        {
+          "id": "yahoo_finance",
+          "requirement": "required",
+          "type": "market_data"
+        },
+        {
+          "id": "local_calculation",
+          "requirement": "not_required",
+          "type": "calculation"
+        }
+      ],
+      "status": "beta",
+      "summary": "Enrich ticker signals with company name / sector / industry and recommendation-date + current price via Yahoo Finance, and emit a records file for a generic writer such as write-supabase (the dashboard derives gain percent and days held). Reusable by any producer with tickers.",
+      "timeframe": "daily"
     },
     {
       "category": "trade-memory",
@@ -963,6 +1021,22 @@
       "status": "production",
       "summary": "Generate a weekly performance summary from closed trades with win rate, expectancy, and pattern analysis.",
       "timeframe": "weekly"
+    },
+    {
+      "category": "meta",
+      "difficulty": "intermediate",
+      "display_name": "Write Supabase",
+      "id": "write-supabase",
+      "integrations": [
+        {
+          "id": "supabase",
+          "requirement": "required",
+          "type": "web"
+        }
+      ],
+      "status": "beta",
+      "summary": "Generic Supabase table writer. Reads a records JSON file and upserts or inserts the rows into a caller-named Supabase table with a caller-supplied conflict key. Domain-agnostic and reusable by any workflow that needs to persist records to Supabase.",
+      "timeframe": "event-driven"
     }
   ],
   "skillsets": [
@@ -1180,6 +1254,25 @@
         "part-time-swing-trader",
         "growth-investor",
         "macro-discretionary-trader"
+      ]
+    },
+    {
+      "api_profile": "mixed",
+      "cadence": "daily",
+      "difficulty": "intermediate",
+      "display_name": "Social Signal Daily",
+      "estimated_minutes": 20,
+      "id": "social-signal-daily",
+      "optional_skills": [],
+      "prerequisite_workflows": [],
+      "required_skills": [
+        "social-signal-ingestor",
+        "ticker-enricher",
+        "write-supabase"
+      ],
+      "target_users": [
+        "part-time-swing-trader",
+        "growth-investor"
       ]
     },
     {

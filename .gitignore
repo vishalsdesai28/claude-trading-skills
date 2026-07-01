@@ -20,6 +20,7 @@ env/
 .vscode/
 .claude/
 .envrc
+.env
 .mcp.json
 
 # Logs & temp
@@ -41,6 +42,10 @@ canslim_screener_*.md
 # Per-symbol runtime state (e.g. parabolic-short SSR carryover files).
 # Kept out of commits so production state never leaks into the repo.
 state/
+
+# Ingested social data (social-signal-ingestor): raw transcripts, vault notes,
+# per-agent state. Runtime-only — never commit scraped content to the public repo.
+data/
 
 # CI artifacts
 htmlcov/

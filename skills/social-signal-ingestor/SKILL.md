@@ -1,0 +1,125 @@
+---
+name: social-signal-ingestor
+description: Ingest trading signals from YouTube channels — fetch video transcripts via yt-dlp, then extract one structured signal note per ticker (direction, price levels, sources) into a local vault. Use when mining social/video commentary for tradeable tickers, sentiment, and catalysts to feed the edge pipeline. YouTube is v1; X/Reddit plug in later via Agent-Reach.
+---
+
+# Social Signal Ingestor
+
+## Overview
+
+Mine trading YouTube channels for tradeable signals. A deterministic fetch step
+(`ingest_youtube.py`, wrapping the `yt-dlp` binary) stores immutable raw artifacts
+and writes a source stub per new video; this skill then reads each transcript and
+extracts **one signal note per ticker** into a vault; a deterministic index build
+(`build_signal_index.py`) emits `signals/index.json`, which `edge-social-aggregator`
+consumes. No video/audio is downloaded — metadata + subtitles only.
+
+Storage is namespaced by agent: `data/<agent>/{raw,vault,state}` (default agent `social`).
+
+## When to Use
+
+- Mining YouTube trading commentary for tickers, sentiment, price levels, and catalysts.
+- Producing social signals to merge (low-weight) into `edge-signal-aggregator`.
+- NOT for fundamentals/technicals on a known ticker (use `us-stock-analysis`), and not
+  for delivery/messaging (that is Hermes territory).
+
+## Prerequisites
+
+- `yt-dlp` on PATH (`pip install yt-dlp`). Public subtitles only — no API key.
+- `pyyaml` (already a repo dependency).
+- A channel list (`assets/channels.yaml` by default; override with `--config`).
+
+## Workflow
+
+### Step 1 — Fetch new videos (deterministic)
+
+```bash
+python3 skills/social-signal-ingestor/scripts/ingest_youtube.py \
+  --agent social --config skills/social-signal-ingestor/assets/channels.yaml
+```
+
+Writes raw artifacts to `data/social/raw/youtube/<channel>/<video_id>/`
+(`metadata.json`, `transcript .clean.txt`), a source stub in
+`data/social/vault/current/sources/youtube/`, updates `state/youtube_state.json`
+(idempotent — seen videos are skipped), and prints a JSON report listing
+`new_videos` (each with `clean_transcript_paths` and `source_stub`).
+
+### Step 2 — Extract signal notes (the analysis step)
+
+For every entry in the report's `new_videos`:
+
+1. Read the `clean_transcript_paths` and the `source_stub`.
+2. Fill in the source stub's summary + trading-relevant claims.
+3. Create **one signal note per real, quotable ticker** in
+   `data/<agent>/vault/current/signals/` named `YYYY-MM-DD_TICKER_short-slug.md`,
+   following `references/signal-schema.md`. Required frontmatter: `title`, `type: signal`,
+   `ticker` (one symbol), `direction` (long/short/watch), `time_horizon`,
+   `claim_date`, `sources` (wikilinks to the source note).
+4. Add a `watch` block only when the source gives clean numeric trigger/invalidation
+   levels. Conviction is computed downstream from recency and corroboration, so there
+   is no confidence field to set — just be accurate about `claim_date` and `sources`.
+5. If the video calls an **options** trade, set `instrument: option`, name the
+   `option_strategy` (e.g. `long_call`, `put_credit_spread`), and add one `option_legs`
+   entry per leg (`{side, right, strike, expiry, ratio}`); set `net_premium` only when the
+   source states the trade's cost. Plain stock picks need none of these — `instrument`
+   defaults to `stock`. Capture only what the source actually states; never invent strikes,
+   expiries, or premiums.
+6. Never invent a ticker for a theme with no instrument; never join symbols
+   (`STRL/POWL`) into one note.
+
+### Step 3 — Rebuild the machine index (deterministic)
+
+```bash
+python3 skills/social-signal-ingestor/scripts/build_signal_index.py --agent social
+```
+
+Scans the signal notes and writes two files, reporting any parse errors or multi-symbol
+ticker warnings. Run this AFTER Step 2.
+
+- `signals/index.json` — the full week's signals (cumulative; notes accumulate in the vault
+  until the weekly reset). Consumed by `edge-social-aggregator` and for tracking.
+- `signals/index_last.json` — only the records new since the previous `index.json` (this run's
+  delta), overwritten each run. Consumed by `robinhood-trade-executor` so it buys only the fresh
+  picks, not the whole week's accumulation. Same schema as `index.json`.
+
+## Output
+
+- `data/<agent>/raw/youtube/...` — immutable transcripts + metadata.
+- `data/<agent>/vault/current/sources/youtube/*.md` — one source note per video.
+- `data/<agent>/vault/current/signals/*.md` — one signal note per ticker.
+- `data/<agent>/vault/current/signals/index.json` — the full-week machine contract consumed by
+  `edge-social-aggregator`.
+- `data/<agent>/vault/current/signals/index_last.json` — this run's new records only (same
+  schema), consumed by `robinhood-trade-executor`.
+
+The `data/` tree is git-ignored — raw transcripts and signals never enter the repo.
+
+## Weekly reset (keep the vault bounded)
+
+The vault grows forever otherwise — `raw/youtube` accumulates ~0.8 MB/video and signal
+notes never expire, so the index and everything downstream keep re-processing stale picks.
+Archive the week and start fresh:
+
+```bash
+python3 skills/social-signal-ingestor/scripts/reset_weekly_vault.py --agent social --dry-run  # preview
+python3 skills/social-signal-ingestor/scripts/reset_weekly_vault.py --agent social             # do it
+```
+
+Archives `vault/current` → `vault/archive/weeks/YYYY-Www`, re-inits an empty current week,
+prunes raw videos older than `--raw-days` (default 60) and week-archives beyond `--keep-weeks`
+(default 8). **Idempotent per ISO week** (a `_reset.json` marker; re-runs are no-ops unless
+`--force`). `state/youtube_state.json` is left untouched, so the seen-video dedup survives — the
+ingestor never re-fetches or re-extracts archived videos. Pure script, no LLM tokens.
+
+Schedule it weekly (e.g. cron `0 17 * * 5` — Friday 17:00 UTC). Recommendations already written
+to Supabase persist; only their live-price refresh stops once a pick ages out of the vault.
+
+## Resources
+
+- `references/signal-schema.md` — signal-note frontmatter spec.
+- `assets/channels.yaml` — the (pre-vetted) channel list.
+
+## Notes & Risk
+
+- `yt-dlp` scrapes public YouTube subtitles; YouTube rate-limits (HTTP 429). Keep
+  `playlist_items` small.

@@ -1,0 +1,58 @@
+# Channel list for social-signal-ingestor (YouTube v1).
+# Ingested data lands under data/<agent>/ (default agent name: "social").
+# Override the file with --config, the agent with --agent.
+#
+# Channels are pre-vetted before they go here — every listed channel is treated
+# as equally trustworthy, so there is no per-channel reliability field. Add a
+# channel only after you've verified it; set enabled:false to pause one.
+
+youtube:
+  playlist_items: 5            # recent videos to check per channel per run
+  initial_since_hours: 24      # first run per channel ingests only the last 24h
+  subtitle_languages: en.*,en  # preferred subtitle language order
+
+  channels:
+    - name: stocks-with-josh
+      url: https://www.youtube.com/@StockswithJosh/videos
+      enabled: true
+      notes: Trading and stock market commentary from Stocks with Josh.
+    - name: the-traveling-trader
+      url: https://www.youtube.com/@TheTravelingTrader/videos
+      enabled: true
+      notes: Trading and market commentary from The Traveling Trader.
+    - name: ross-givens
+      url: https://www.youtube.com/@RossGivens/videos
+      enabled: true
+      notes: Trading and market commentary from Ross Givens.
+    - name: trading-with-ashley
+      url: https://www.youtube.com/@ashleytradingwithashley/videos
+      enabled: true
+      notes: Trading and market commentary from Trading with Ashley.
+    - name: money-talk-rashad
+      url: https://www.youtube.com/@moneytalkrashad/videos
+      enabled: true
+      notes: Trading and market commentary from Money Talk Rashad.
+    - name: market-moves
+      url: https://www.youtube.com/@MarketMoves/videos
+      enabled: true
+      notes: Trading and market commentary from Market Moves.
+    - name: unusual-option
+      url: https://www.youtube.com/@UnusualOption/videos
+      enabled: true
+      notes: Options flow and market commentary from Unusual Option.
+    - name: marketbeat-media
+      url: https://www.youtube.com/@MarketBeatMedia/videos
+      enabled: true
+      notes: Market news and stock commentary from MarketBeat Media.
+    - name: business-with-brian
+      url: https://www.youtube.com/@BusinessWithBrian/videos
+      enabled: true
+      notes: Trading and market commentary from Business with Brian.
+    - name: options-with-ryan
+      url: https://www.youtube.com/@OptionsWithRyan/videos
+      enabled: true
+      notes: Options trading and market commentary from Options with Ryan.
+    - name: stockup-with-larry-jones
+      url: https://www.youtube.com/@STOCKUPwithLarryJones/videos
+      enabled: true
+      notes: Trading and market commentary from STOCK UP with Larry Jones.

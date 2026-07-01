@@ -20,6 +20,11 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+# social-signal-ingestor shells out to the yt-dlp binary; declared here so CI/envs
+# that run its live ingest can `uv sync --extra youtube`. Not needed for unit tests.
+youtube = [
+    "yt-dlp>=2024.1",
+]
 dev = [
     "pytest>=7.4.0",
     "pytest-cov>=4.1.0",

@@ -3,7 +3,7 @@ layout: default
 title: "Stockbee Momentum Burst Screener"
 grand_parent: 日本語
 parent: スキルガイド
-nav_order: 49
+nav_order: 52
 lang_peer: /en/skills/stockbee-momentum-burst-screener/
 permalink: /ja/skills/stockbee-momentum-burst-screener/
 generated: true
