@@ -29,6 +29,7 @@ recommended_skills:
   - theme-detector
 optional_skills:
   - stockbee-momentum-burst-screener
+  - stockbee-exhaustion-hammer-screener
   - finviz-screener
 
 related_workflows:

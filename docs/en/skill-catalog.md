@@ -10,7 +10,7 @@ permalink: /en/skill-catalog/
 # Skill Catalog
 {: .no_toc }
 
-A comprehensive catalog of all 55 Claude Trading Skills organized by category. Badge indicators show API requirements at a glance.
+A comprehensive catalog of all 61 Claude Trading Skills organized by category. Badge indicators show API requirements at a glance.
 {: .fs-6 .fw-300 }
 
 > Use English skill names ("CANSLIM", "VCP", "FinViz", etc.) for best search results on this page.
@@ -45,6 +45,7 @@ A comprehensive catalog of all 55 Claude Trading Skills organized by category. B
 | **[CANSLIM Screener]({{ '/en/skills/canslim-screener/' | relative_url }})** | Full 7-component CANSLIM growth stock scoring (C, A, N, S, L, I, M). Composite 0-100 ratings with bear market protection. Phase 3 implements 100% of O'Neil's methodology | <span class="badge badge-api">FMP Required</span> |
 | **[VCP Screener]({{ '/en/skills/vcp-screener/' | relative_url }})** | Detects Mark Minervini's Volatility Contraction Pattern. 3-phase pipeline: Pre-filter, Trend Template, VCP Detection with pivot points and trade setups | <span class="badge badge-api">FMP Required</span> |
 | **[Stockbee Momentum Burst Screener]({{ '/en/skills/stockbee-momentum-burst-screener/' | relative_url }})** | Stockbee-style short-term momentum burst screening: 4% breakout, dollar breakout, and range-expansion triggers scored 0-100 (A/B/Watch) with setup-quality and risk-distance filters. Candidate generation only — routes survivors to technical-analyst and position-sizer | <span class="badge badge-api">FMP Required</span> <span class="badge badge-optional">Local JSON Optional</span> |
+| **[Stockbee Exhaustion Hammer Screener]({{ '/en/skills/stockbee-exhaustion-hammer-screener/' | relative_url }})** | Stockbee-style selling-exhaustion hammer screening for liquid stocks with prior momentum, pullback depth, undercut/reclaim behavior, long lower-wick reversal geometry, and risk-distance filters. Candidate generation only | <span class="badge badge-api">FMP Required</span> <span class="badge badge-optional">Local JSON Optional</span> |
 | **[FinViz Screener]({{ '/en/skills/finviz-screener/' | relative_url }})** | Translates natural language (Japanese/English) into FinViz filter URLs. 500+ filter codes across fundamentals, technicals, and descriptives. **Theme cross-screening** (30+ themes × 268 sub-themes) for narrative-based searches like "AI × Logistics" or "Data Centers × Power". Opens results in Chrome | <span class="badge badge-free">No API</span> <span class="badge badge-optional">FINVIZ Optional</span> |
 | **Value Dividend Screener** | Multi-phase dividend stock screening: value characteristics (P/E, P/B), income (yield), growth (3-year trends), sustainability, and quality scoring | <span class="badge badge-api">FMP Required</span> <span class="badge badge-optional">FINVIZ Optional</span> |
 | **Dividend Growth Pullback Screener** | Finds dividend growth stocks (12%+ annual growth, 1.5%+ yield) at oversold technical levels (RSI <= 40). Two-stage FINVIZ + FMP pipeline | <span class="badge badge-api">FMP Required</span> <span class="badge badge-optional">FINVIZ Optional</span> |
@@ -81,6 +82,7 @@ A comprehensive catalog of all 55 Claude Trading Skills organized by category. B
 | **[Theme Detector]({{ '/en/skills/theme-detector/' | relative_url }})** | Detects trending bullish and bearish market themes with 3-dimensional scoring: Theme Heat (0-100), Lifecycle Maturity, and Confidence. 14+ cross-sector themes | <span class="badge badge-free">No API</span> <span class="badge badge-optional">FMP Optional</span> <span class="badge badge-optional">FINVIZ Optional</span> |
 | **[Scenario Analyzer]({{ '/en/skills/scenario-analyzer/' | relative_url }})** | Builds 18-month scenario projections from news headlines. Dual-agent architecture with 1st/2nd/3rd order effects and recommended tickers | <span class="badge badge-free">No API</span> |
 | **[Backtest Expert]({{ '/en/skills/backtest-expert/' | relative_url }})** | Professional-grade strategy validation framework with hypothesis definition, parameter robustness checks, walk-forward testing, and failure post-mortems | <span class="badge badge-free">No API</span> |
+| **[Stockbee 20% Study]({{ '/en/skills/stockbee-20pct-study/' | relative_url }})** | Builds a daily +20%/-20% mover model book, classifies catalyst and chart context, updates forward outcomes, and mines cohorts for research prompts. Study workflow only — not a buy/sell signal service | <span class="badge badge-api">FMP Required</span> <span class="badge badge-optional">Local JSON Optional</span> |
 | **Options Strategy Advisor** | Educational options tool using Black-Scholes pricing. Calculates Greeks (Delta, Gamma, Theta, Vega, Rho), supports 17+ strategies, P/L simulation | <span class="badge badge-optional">FMP Optional</span> |
 | **Pair Trade Screener** | Statistical arbitrage via cointegration testing. Calculates hedge ratios, mean-reversion speed (half-life), and z-score entry/exit signals | <span class="badge badge-api">FMP Required</span> |
 | **Stanley Druckenmiller Investment** | Encodes Druckenmiller's macro positioning philosophy: liquidity analysis, asymmetric risk/reward, conviction sizing, and loss-cutting discipline | <span class="badge badge-free">No API</span> |
@@ -263,11 +265,15 @@ A comprehensive catalog of all 55 Claude Trading Skills organized by category. B
 | Trading Skills Navigator | -- | -- | -- |
 | Trade Performance Coach | -- | -- | -- |
 | Weekly Performance Digest | -- | -- | -- |
+| Stockbee Episodic Pivot Analyzer | Optional | -- | -- |
 | Stockbee Momentum Burst Screener | Required | -- | -- |
 | Edge Social Aggregator | -- | -- | -- |
 | Social Signal Ingestor | -- | -- | -- |
 | Ticker Enricher | -- | -- | -- |
 | Write Supabase | -- | -- | -- |
 | Robinhood Trade Executor | -- | -- | -- |
+| Stockbee Setup Fluency Trainer | Optional | -- | -- |
+| Stockbee 20pct Study | Required | -- | -- |
+| Stockbee Exhaustion Hammer Screener | Required | -- | -- |
 
 "--" means not required. "Optional" means functionality is enhanced but the skill works without it.

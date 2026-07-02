@@ -266,7 +266,11 @@ The table below is **auto-generated** from `skills-index.yaml` by `scripts/gener
 | **Skill Integration Tester** | ❌ Not used | ❌ Not used | ❌ Not used | Validates multi-skill workflow contracts |
 | **Social Signal Ingestor** | ❌ Not used | ❌ Not used | ❌ Not used | Public video metadata + subtitles via the yt-dlp binary (no API key); Transcript cleaning + signal indexing run locally |
 | **Stanley Druckenmiller Investment** | ❌ Not used | ❌ Not used | ❌ Not used | Synthesizes outputs from upstream skills; pure calculation |
+| **Stockbee 20% Study** | ✅ Required | ❌ Not used | ❌ Not used | Live US universe, daily OHLCV, symbol profile, and optional historical backfill data |
+| **Stockbee Episodic Pivot Analyzer** | 🟡 Optional | ❌ Not used | ❌ Not used | Optional OHLCV/profile enrichment via Financial Modeling Prep |
+| **Stockbee Exhaustion Hammer Screener** | ✅ Required | ❌ Not used | ❌ Not used | Live US universe, daily OHLCV, and optional quote-derived near-close bar via Financial Modeling Prep |
 | **Stockbee Momentum Burst Screener** | ✅ Required | ❌ Not used | ❌ Not used | Live US universe and daily OHLCV via Financial Modeling Prep |
+| **Stockbee Setup Fluency Trainer** | 🟡 Optional | ❌ Not used | ❌ Not used | Financial Modeling Prep daily OHLCV for automatic outcome updates when local prices are unavailable |
 | **Strategy Pivot Designer** | ❌ Not used | ❌ Not used | ❌ Not used | Pivot proposal generator; pure calculation |
 | **Technical Analyst** | ❌ Not used | ❌ Not used | ❌ Not used | Chart screenshot input |
 | **Theme Detector** | 🟡 Optional | 🟡 Optional (Recommended) | ❌ Not used | Financial Modeling Prep API |

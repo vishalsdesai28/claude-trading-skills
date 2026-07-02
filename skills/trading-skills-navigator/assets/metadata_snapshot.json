@@ -625,6 +625,22 @@
       "timeframe": "event-driven"
     },
     {
+      "category": "trade-planning",
+      "difficulty": "advanced",
+      "display_name": "Robinhood Trade Executor",
+      "id": "robinhood-trade-executor",
+      "integrations": [
+        {
+          "id": "robinhood",
+          "requirement": "required",
+          "type": "broker"
+        }
+      ],
+      "status": "beta",
+      "summary": "Place automated fixed-notional market buys on Robinhood for newly-identified long-stock signals from the social-signal-daily pipeline. Reads social-signal-ingestor's signals/index.json, keeps long stock only (skips options, shorts, watch, and not-yet-triggered setups), buys one caller-specified position per ticker not already held via the Robinhood MCP connector, and writes an order-confirmations report. Real-money, fully automated, no human gate.",
+      "timeframe": "event-driven"
+    },
+    {
       "category": "strategy-research",
       "difficulty": "advanced",
       "display_name": "Scenario Analyzer",
@@ -758,6 +774,99 @@
       "timeframe": "weekly"
     },
     {
+      "category": "strategy-research",
+      "difficulty": "advanced",
+      "display_name": "Stockbee 20% Study",
+      "id": "stockbee-20pct-study",
+      "integrations": [
+        {
+          "id": "fmp",
+          "requirement": "required",
+          "type": "market_data"
+        },
+        {
+          "id": "prices_json",
+          "requirement": "optional",
+          "type": "local_file"
+        },
+        {
+          "id": "news_events_json",
+          "requirement": "optional",
+          "type": "local_file"
+        },
+        {
+          "id": "websearch",
+          "requirement": "optional",
+          "type": "web"
+        },
+        {
+          "id": "local_calculation",
+          "requirement": "not_required",
+          "type": "calculation"
+        }
+      ],
+      "status": "beta",
+      "summary": "Build a daily Stockbee-style +20%/-20% mover event study, classify catalysts and setup context, update forward outcomes, and export evidence-backed edge hints without treating movers as buy/sell signals.",
+      "timeframe": "daily"
+    },
+    {
+      "category": "advanced-satellite",
+      "difficulty": "advanced",
+      "display_name": "Stockbee Episodic Pivot Analyzer",
+      "id": "stockbee-episodic-pivot-analyzer",
+      "integrations": [
+        {
+          "id": "catalyst_events_json",
+          "requirement": "required",
+          "type": "local_file"
+        },
+        {
+          "id": "fmp",
+          "requirement": "optional",
+          "type": "market_data"
+        },
+        {
+          "id": "local_calculation",
+          "requirement": "not_required",
+          "type": "calculation"
+        }
+      ],
+      "status": "beta",
+      "summary": "Analyze Stockbee-style Day 1 Episodic Pivot candidates from earnings, guidance, M&A, FDA, analyst, contract, product, short-squeeze, and story/theme catalysts using catalyst quality, gap/range expansion, volume shock, neglect/revaluation context, liquidity, and EP-day-low risk.",
+      "timeframe": "event-driven"
+    },
+    {
+      "category": "swing-opportunity",
+      "difficulty": "intermediate",
+      "display_name": "Stockbee Exhaustion Hammer Screener",
+      "id": "stockbee-exhaustion-hammer-screener",
+      "integrations": [
+        {
+          "id": "fmp",
+          "requirement": "required",
+          "type": "market_data"
+        },
+        {
+          "id": "prices_json",
+          "requirement": "optional",
+          "type": "local_file"
+        },
+        {
+          "id": "profiles_json",
+          "requirement": "optional",
+          "type": "local_file"
+        },
+        {
+          "id": "local_calculation",
+          "requirement": "not_required",
+          "type": "calculation"
+        }
+      ],
+      "status": "beta",
+      "summary": "Screen US stocks for Stockbee-style selling-exhaustion hammer candidates using quality/liquidity gates, prior momentum, pullback depth, undercut/reclaim, hammer geometry, volume confirmation, market gate, and risk-distance filters.",
+      "timeframe": "daily"
+    },
+    {
       "category": "swing-opportunity",
       "difficulty": "intermediate",
       "display_name": "Stockbee Momentum Burst Screener",
@@ -781,6 +890,32 @@
       ],
       "status": "beta",
       "summary": "Screen US stocks for Stockbee-style 3-5 day momentum burst candidates using 4% breakout, dollar breakout, range expansion, volume expansion, setup quality, and risk-distance filters.",
+      "timeframe": "daily"
+    },
+    {
+      "category": "trade-memory",
+      "difficulty": "intermediate",
+      "display_name": "Stockbee Setup Fluency Trainer",
+      "id": "stockbee-setup-fluency-trainer",
+      "integrations": [
+        {
+          "id": "prices_json",
+          "requirement": "optional",
+          "type": "local_file"
+        },
+        {
+          "id": "fmp",
+          "requirement": "optional",
+          "type": "market_data"
+        },
+        {
+          "id": "local_calculation",
+          "requirement": "not_required",
+          "type": "calculation"
+        }
+      ],
+      "status": "beta",
+      "summary": "Build a Stockbee-style setup model book from momentum-burst screener candidates, then update 3-day and 5-day forward outcomes with MFE/MAE, stop-hit status, outcome tags, and cohort statistics.",
       "timeframe": "daily"
     },
     {
@@ -1108,6 +1243,7 @@
       "id": "swing-opportunity",
       "optional_skills": [
         "stockbee-momentum-burst-screener",
+        "stockbee-exhaustion-hammer-screener",
         "finviz-screener"
       ],
       "recommended_skills": [
@@ -1261,14 +1397,89 @@
       "cadence": "daily",
       "difficulty": "intermediate",
       "display_name": "Social Signal Daily",
-      "estimated_minutes": 20,
+      "estimated_minutes": 25,
       "id": "social-signal-daily",
       "optional_skills": [],
       "prerequisite_workflows": [],
       "required_skills": [
         "social-signal-ingestor",
         "ticker-enricher",
-        "write-supabase"
+        "write-supabase",
+        "robinhood-trade-executor"
+      ],
+      "target_users": [
+        "part-time-swing-trader",
+        "growth-investor"
+      ]
+    },
+    {
+      "api_profile": "mixed",
+      "cadence": "daily",
+      "difficulty": "advanced",
+      "display_name": "Stockbee 20% Study Daily",
+      "estimated_minutes": 30,
+      "id": "stockbee-20pct-study-daily",
+      "optional_skills": [
+        "trader-memory-core",
+        "edge-candidate-agent",
+        "edge-hint-extractor",
+        "stockbee-episodic-pivot-analyzer",
+        "theme-detector",
+        "backtest-expert"
+      ],
+      "prerequisite_workflows": [],
+      "required_skills": [
+        "stockbee-20pct-study"
+      ],
+      "target_users": [
+        "part-time-swing-trader",
+        "growth-investor",
+        "strategy-researcher"
+      ]
+    },
+    {
+      "api_profile": "mixed",
+      "cadence": "daily",
+      "difficulty": "advanced",
+      "display_name": "Stockbee EP Daily",
+      "estimated_minutes": 35,
+      "id": "stockbee-ep-daily",
+      "optional_skills": [
+        "earnings-trade-analyzer",
+        "stockbee-momentum-burst-screener",
+        "pead-screener",
+        "theme-detector",
+        "breakout-trade-planner"
+      ],
+      "prerequisite_workflows": [
+        "market-regime-daily"
+      ],
+      "required_skills": [
+        "stockbee-episodic-pivot-analyzer",
+        "technical-analyst",
+        "position-sizer",
+        "trader-memory-core"
+      ],
+      "target_users": [
+        "part-time-swing-trader",
+        "growth-investor"
+      ]
+    },
+    {
+      "api_profile": "no-api-basic",
+      "cadence": "daily",
+      "difficulty": "intermediate",
+      "display_name": "Stockbee Setup Fluency Loop",
+      "estimated_minutes": 20,
+      "id": "stockbee-fluency-loop",
+      "optional_skills": [
+        "trader-memory-core",
+        "signal-postmortem",
+        "backtest-expert"
+      ],
+      "prerequisite_workflows": [],
+      "required_skills": [
+        "stockbee-setup-fluency-trainer"
       ],
       "target_users": [
         "part-time-swing-trader",
@@ -1280,10 +1491,11 @@
       "cadence": "daily",
       "difficulty": "intermediate",
       "display_name": "Swing Opportunity Daily",
-      "estimated_minutes": 35,
+      "estimated_minutes": 40,
       "id": "swing-opportunity-daily",
       "optional_skills": [
         "stockbee-momentum-burst-screener",
+        "stockbee-exhaustion-hammer-screener",
         "canslim-screener",
         "breakout-trade-planner",
         "theme-detector"

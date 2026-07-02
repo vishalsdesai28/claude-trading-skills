@@ -3,7 +3,7 @@ layout: default
 title: "Ticker Enricher"
 grand_parent: 日本語
 parent: スキルガイド
-nav_order: 55
+nav_order: 59
 lang_peer: /en/skills/ticker-enricher/
 permalink: /ja/skills/ticker-enricher/
 generated: true

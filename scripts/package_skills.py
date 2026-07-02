@@ -18,7 +18,7 @@ DEFAULT_SKILLS_DIR = PROJECT_ROOT / "skills"
 DEFAULT_OUTPUT_DIR = PROJECT_ROOT / "skill-packages"
 FIXED_ZIP_DATE = (2026, 1, 1, 0, 0, 0)
 
-EXCLUDED_DIR_NAMES = {"tests", "__pycache__"}
+EXCLUDED_DIR_NAMES = {"tests", "__pycache__", ".pytest_cache"}
 EXCLUDED_FILE_NAMES = {".DS_Store"}
 EXCLUDED_SUFFIXES = {".pyc", ".pyo"}
 

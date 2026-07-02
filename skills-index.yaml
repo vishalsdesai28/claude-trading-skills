@@ -941,6 +941,119 @@ skills:
   outputs:
   - druckenmiller_synthesis_report
   workflows: []
+- id: stockbee-20pct-study
+  display_name: Stockbee 20% Study
+  category: strategy-research
+  status: beta
+  summary: Build a daily Stockbee-style +20%/-20% mover event study, classify catalysts and setup context,
+    update forward outcomes, and export evidence-backed edge hints without treating movers as buy/sell signals.
+  timeframe: daily
+  difficulty: advanced
+  integrations:
+  - id: fmp
+    type: market_data
+    requirement: required
+    note: Live US universe, daily OHLCV, symbol profile, and optional historical backfill data
+  - id: prices_json
+    type: local_file
+    requirement: optional
+    note: Offline OHLCV JSON fallback for no-API backfills and tests
+  - id: news_events_json
+    type: local_file
+    requirement: optional
+    note: Optional catalyst/event records for higher-quality classification
+  - id: websearch
+    type: web
+    requirement: optional
+    note: Optional manual catalyst enrichment when structured event data is unavailable
+  - id: local_calculation
+    type: calculation
+    requirement: not_required
+    note: Event detection, outcome updates, cohort statistics, and report generation
+  inputs:
+  - daily_ohlcv_universe
+  - optional_news_events
+  - market_regime_report
+  - twenty_pct_study_db
+  outputs:
+  - twenty_pct_mover_events
+  - classified_event_study
+  - matured_event_outcomes
+  - twenty_pct_cohort_summary
+  - edge_hints_yaml
+  workflows:
+  - stockbee-20pct-study-daily
+- id: stockbee-episodic-pivot-analyzer
+  display_name: Stockbee Episodic Pivot Analyzer
+  category: advanced-satellite
+  status: beta
+  summary: Analyze Stockbee-style Day 1 Episodic Pivot candidates from earnings, guidance, M&A, FDA,
+    analyst, contract, product, short-squeeze, and story/theme catalysts using catalyst quality,
+    gap/range expansion, volume shock, neglect/revaluation context, liquidity, and EP-day-low risk.
+  timeframe: event-driven
+  difficulty: advanced
+  integrations:
+  - id: catalyst_events_json
+    type: local_file
+    requirement: required
+    note: User-provided or upstream-generated catalyst/event records; the skill does not discover news by itself
+  - id: fmp
+    type: market_data
+    requirement: optional
+    note: Optional OHLCV/profile enrichment via Financial Modeling Prep
+  - id: local_calculation
+    type: calculation
+    requirement: not_required
+    note: Catalyst classification, EP scoring, handoff flags, and report generation
+  inputs:
+  - catalyst_events
+  - earnings_trade_candidates
+  - momentum_burst_candidates
+  - daily_ohlcv
+  outputs:
+  - episodic_pivot_candidates
+  - catalyst_quality_scores
+  - delayed_ep_watchlist
+  - pead_handoff_candidates
+  workflows:
+  - stockbee-ep-daily
+- id: stockbee-exhaustion-hammer-screener
+  display_name: Stockbee Exhaustion Hammer Screener
+  category: swing-opportunity
+  status: beta
+  summary: Screen US stocks for Stockbee-style selling-exhaustion hammer candidates using quality/liquidity
+    gates, prior momentum, pullback depth, undercut/reclaim, hammer geometry, volume confirmation,
+    market gate, and risk-distance filters.
+  timeframe: daily
+  difficulty: intermediate
+  integrations:
+  - id: fmp
+    type: market_data
+    requirement: required
+    note: Live US universe, daily OHLCV, and optional quote-derived near-close bar via Financial Modeling Prep
+  - id: prices_json
+    type: local_file
+    requirement: optional
+    note: Offline or near-close provisional OHLCV JSON fallback for no-API screening and tests
+  - id: profiles_json
+    type: local_file
+    requirement: optional
+    note: Optional quality metadata keyed by symbol, such as marketCap and holder counts
+  - id: local_calculation
+    type: calculation
+    requirement: not_required
+    note: Pullback context, hammer geometry, risk-distance scoring, and report generation
+  inputs:
+  - daily_ohlcv_universe
+  - quality_profiles
+  - market_regime_report
+  - risk_policy
+  outputs:
+  - exhaustion_hammer_candidates
+  - setup_quality_scores
+  - trade_plan_inputs
+  workflows:
+  - swing-opportunity-daily
 - id: stockbee-momentum-burst-screener
   display_name: Stockbee Momentum Burst Screener
   category: swing-opportunity
@@ -972,6 +1085,38 @@ skills:
   - trade_plan_inputs
   workflows:
   - swing-opportunity-daily
+- id: stockbee-setup-fluency-trainer
+  display_name: Stockbee Setup Fluency Trainer
+  category: trade-memory
+  status: beta
+  summary: Build a Stockbee-style setup model book from momentum-burst screener candidates, then update
+    3-day and 5-day forward outcomes with MFE/MAE, stop-hit status, outcome tags, and cohort statistics.
+  timeframe: daily
+  difficulty: intermediate
+  integrations:
+  - id: prices_json
+    type: local_file
+    requirement: optional
+    note: Offline OHLCV JSON for no-API 3/5-day outcome updates
+  - id: fmp
+    type: market_data
+    requirement: optional
+    note: Financial Modeling Prep daily OHLCV for automatic outcome updates when local prices are unavailable
+  - id: local_calculation
+    type: calculation
+    requirement: not_required
+    note: JSONL model-book upsert, MFE/MAE calculation, outcome tagging, and cohort statistics
+  inputs:
+  - momentum_burst_candidates
+  - daily_ohlcv_by_symbol
+  - model_book_jsonl
+  outputs:
+  - stockbee_model_book
+  - matured_setup_outcomes
+  - setup_fluency_summary
+  - rule_candidates
+  workflows:
+  - stockbee-fluency-loop
 - id: strategy-pivot-designer
   display_name: Strategy Pivot Designer
   category: strategy-research

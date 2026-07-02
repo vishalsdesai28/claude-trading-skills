@@ -18,6 +18,7 @@ def test_should_include_excludes_tests_and_local_artifacts() -> None:
     assert not should_include(Path("scripts/tests/test_run.py"))
     assert not should_include(Path("tests/test_skill.py"))
     assert not should_include(Path("scripts/__pycache__/run.cpython-311.pyc"))
+    assert not should_include(Path("scripts/.pytest_cache/v/cache/nodeids"))
     assert not should_include(Path("assets/.DS_Store"))
 
 
@@ -27,11 +28,13 @@ def test_package_skill_excludes_tests_and_build_artifacts(tmp_path: Path) -> Non
     (skill_dir / "references").mkdir()
     (skill_dir / "assets").mkdir()
     (skill_dir / "scripts" / "__pycache__").mkdir()
+    (skill_dir / "scripts" / ".pytest_cache" / "v" / "cache").mkdir(parents=True)
 
     (skill_dir / "SKILL.md").write_text("---\nname: demo-skill\ndescription: Demo.\n---\n")
     (skill_dir / "scripts" / "run.py").write_text("print('ok')\n")
     (skill_dir / "scripts" / "tests" / "test_run.py").write_text("def test_run(): pass\n")
     (skill_dir / "scripts" / "__pycache__" / "run.cpython-311.pyc").write_bytes(b"pyc")
+    (skill_dir / "scripts" / ".pytest_cache" / "v" / "cache" / "nodeids").write_text("[]\n")
     (skill_dir / "references" / "guide.md").write_text("# Guide\n")
     (skill_dir / "assets" / ".DS_Store").write_bytes(b"junk")
 
@@ -45,6 +48,7 @@ def test_package_skill_excludes_tests_and_build_artifacts(tmp_path: Path) -> Non
     assert "demo-skill/references/guide.md" in names
     assert all("/tests/" not in name for name in names)
     assert all("__pycache__" not in name for name in names)
+    assert all(".pytest_cache" not in name for name in names)
     assert all(not name.endswith(".DS_Store") for name in names)
 
 
