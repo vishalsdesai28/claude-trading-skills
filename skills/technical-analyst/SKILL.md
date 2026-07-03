@@ -1,6 +1,6 @@
 ---
 name: technical-analyst
-description: This skill should be used when analyzing weekly price charts for stocks, stock indices, cryptocurrencies, or forex pairs. Use this skill when the user provides chart images and requests technical analysis, trend identification, support/resistance levels, scenario planning, or probability assessments based purely on chart data without consideration of news or fundamental factors.
+description: This skill should be used when analyzing weekly price charts for stocks, stock indices, cryptocurrencies, or forex pairs. Trigger when the user provides a chart image OR just a ticker symbol and requests technical analysis, trend identification, support/resistance levels, scenario planning, or probability assessments based purely on chart data without consideration of news or fundamental factors. When no image is provided, fetch weekly OHLCV via yahoo-finance-pp-cli and render the chart automatically with scripts/render_weekly_chart.py.
 ---
 
 # Technical Analyst
@@ -19,8 +19,9 @@ This skill enables comprehensive technical analysis of weekly price charts. Anal
 
 ## Prerequisites
 
-- **Chart Images**: User must provide weekly timeframe chart images for analysis
-- **No API Keys Required**: This skill analyzes user-provided images; no external data fetches
+- **Input**: EITHER a weekly chart image, OR a ticker symbol (the skill fetches data and renders the chart).
+- **Ticker path**: requires `yahoo-finance-pp-cli` on PATH (no API key) and `uv` for `scripts/render_weekly_chart.py`. Falls back to requesting an image if the fetch fails or returns no data.
+- **Image path**: analyzes the user-provided image directly; no external data fetches.
 
 ## Output
 
@@ -37,6 +38,23 @@ This skill generates markdown analysis reports saved to the `reports/` directory
 5. **Sequential Processing**: Analyze each chart individually and document findings immediately
 
 ## Analysis Workflow
+
+### Step 0: Determine Input Path
+
+- **Image provided** → skip to Step 1 (vision analysis of the user's image).
+- **Ticker only, no image** → auto-generate the chart first, then analyze:
+  1. Render the chart (also fetches the data):
+     ```
+     uv run scripts/render_weekly_chart.py <TICKER> --sma 20,30,50,200 --range 5y --out reports/
+     ```
+     Adjust `--sma`/`--ema` to the indicators the analysis needs (the visual style is fixed;
+     only the indicator set varies). Use `--range 10y` or `max` when more history is wanted —
+     `5y` is the floor for the 200-week SMA.
+  2. If the script exits non-zero (unknown ticker, no bars), tell the user and ask for an image
+     instead. Do not fabricate levels.
+  3. On the ticker path, derive every level and MA value from the fetched OHLCV numbers — they
+     are the source of truth. The rendered PNG is a report artifact, not the thing analyzed.
+  4. Embed the saved PNG path in the report (see template `Chart:` line).
 
 ### Step 1: Receive Chart Images
 
@@ -255,3 +273,9 @@ Comprehensive methodology for technical analysis including:
 Structured template for technical analysis reports with all required sections.
 
 **Usage**: Use this template structure for every analysis report. Copy the format and populate with specific findings for each chart.
+
+### scripts/render_weekly_chart.py
+
+Renders a deterministic TradingView-style weekly candlestick chart (dark theme, pinned SMA colors — 20=yellow, 30=white, 50=green, 200=red — volume panel) from yahoo-finance-pp-cli data. The visual style is fixed run to run; only the indicator set varies via `--sma`/`--ema`.
+
+**Usage** (ticker path, Step 0): `uv run scripts/render_weekly_chart.py <TICKER> --sma 20,30,50,200 --range 5y --out reports/`. Run `--self-check` for an offline render test.
