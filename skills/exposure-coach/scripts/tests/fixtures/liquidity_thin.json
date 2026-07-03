@@ -1,0 +1,7 @@
+{
+  "ticker": "TINYCO",
+  "adv_usd": 2500000,
+  "spread_bps": 45.0,
+  "estimated_impact_bps": 120.0,
+  "liquidity_tier": "low"
+}

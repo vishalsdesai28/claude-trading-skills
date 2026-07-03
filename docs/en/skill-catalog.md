@@ -53,6 +53,7 @@ A comprehensive catalog of all 61 Claude Trading Skills organized by category. B
 | **PEAD Screener** | Screens for Post-Earnings Announcement Drift patterns using weekly candle analysis. Stage-based monitoring: MONITORING, SIGNAL_READY, BREAKOUT, EXPIRED | <span class="badge badge-api">FMP Required</span> |
 | **FTD Detector** | Detects Follow-Through Day signals for market bottom confirmation using William O'Neil's methodology. Dual-index tracking with quality scoring (0-100) | <span class="badge badge-api">FMP Required</span> |
 | **Institutional Flow Tracker** | Tracks institutional ownership changes using 13F SEC filings. Tier-based quality framework weights superinvestors (Berkshire, Baupost) higher than index funds | <span class="badge badge-api">FMP Required</span> |
+| **[Short-Squeeze Radar]({{ '/en/skills/short-squeeze-radar/' | relative_url }})** | Ranks US equities by short-squeeze potential from free FINRA data: Reg SHO daily short-volume inflection plus optional bi-monthly short interest for days-to-cover, classifying crowded-short / neutral / low-pressure names | <span class="badge badge-free">No API</span> |
 
 ---
 
@@ -72,6 +73,7 @@ A comprehensive catalog of all 61 Claude Trading Skills organized by category. B
 | **Market Top Detector** | Detects market top probability using O'Neil Distribution Days, Minervini Leading Stock Deterioration, and Defensive Rotation. 6-component tactical timing system | <span class="badge badge-free">No API</span> |
 | **[IBD Distribution Day Monitor]({{ '/en/skills/ibd-distribution-day-monitor/' | relative_url }})** | Daily IBD Distribution Day detection for QQQ/SPY with 25-session expiration and 5% invalidation. Risk classification (NORMAL/CAUTION/HIGH/SEVERE) and TQQQ/QQQ exposure recommendation | <span class="badge badge-api">FMP Required</span> |
 | **[Downtrend Duration Analyzer]({{ '/en/skills/downtrend-duration-analyzer/' | relative_url }})** | Analyzes historical downtrend durations (peak-to-trough) and generates interactive HTML histograms segmented by sector and market cap | <span class="badge badge-api">FMP Required</span> |
+| **[Morning Note Briefing]({{ '/en/skills/morning-note-briefing/' | relative_url }})** | Assembles a fixed-format, two-minute pre-market morning note by composing the JSON outputs of existing skills (earnings, movers/sector, macro calendar, live catalysts). Leads with the top development, a directional Top Call, and long/short ideas. Pure offline assembler | <span class="badge badge-free">No API</span> |
 
 ---
 
@@ -87,6 +89,7 @@ A comprehensive catalog of all 61 Claude Trading Skills organized by category. B
 | **Pair Trade Screener** | Statistical arbitrage via cointegration testing. Calculates hedge ratios, mean-reversion speed (half-life), and z-score entry/exit signals | <span class="badge badge-api">FMP Required</span> |
 | **Stanley Druckenmiller Investment** | Encodes Druckenmiller's macro positioning philosophy: liquidity analysis, asymmetric risk/reward, conviction sizing, and loss-cutting discipline | <span class="badge badge-free">No API</span> |
 | **Strategy Pivot Designer** | Detects backtest stagnation and generates structurally different pivot proposals. 4 deterministic triggers, 3 pivot techniques across 8 strategy archetypes | <span class="badge badge-free">No API</span> |
+| **[Dealer Gamma Analyzer]({{ '/en/skills/dealer-gamma-analyzer/' | relative_url }})** | Quantifies dealer options gamma (GEX) from free ~15-min delayed CBOE data: signed gamma per strike, call/put walls as S/R levels, gamma-flip strike, max pain, and positive/negative-gamma regime classification | <span class="badge badge-free">No API</span> |
 
 ---
 
@@ -105,6 +108,9 @@ A comprehensive catalog of all 61 Claude Trading Skills organized by category. B
 | **[US Stock Analysis]({{ '/en/skills/us-stock-analysis/' | relative_url }})** | Comprehensive US equity research: fundamentals, technicals, peer comparisons, and structured investment memos with bull/bear cases | <span class="badge badge-free">No API</span> |
 | **Earnings Calendar** | Fetches upcoming earnings announcements via FMP API. Focuses on mid-cap+ companies (>$2B market cap), organized by date and timing (BMO/AMC) | <span class="badge badge-api">FMP Required</span> |
 | **Economic Calendar Fetcher** | Fetches economic events (FOMC, NFP, CPI, GDP) for 7-90 days via FMP API. Impact assessment (High/Medium/Low) with market implications analysis | <span class="badge badge-api">FMP Required</span> |
+| **[Intrinsic Value (DCF)]({{ '/en/skills/intrinsic-value-dcf/' | relative_url }})** | Triangulated intrinsic-value estimate for a US ticker: CAPM-WACC DCF with 5-year FCFF fade and dual terminal value, peer-median relative multiples, and optional sum-of-the-parts, with a recalculated sensitivity grid, Bull/Base/Bear scenarios, and sector-aware routing. Keyless yfinance fallback | <span class="badge badge-api">FMP Required</span> |
+| **[Dynamic Exit Engine]({{ '/en/skills/dynamic-exit-engine/' | relative_url }})** | Adaptive trailing-stop FSM for an open long position: two-phase hard-stop then ratcheting profit floor, with breakeven lock, stale-flat timeout, ATR noise band, and consecutive-breach confirmation. Deterministic replay over an OHLCV series | <span class="badge badge-optional">FMP Optional</span> |
+| **[Adversarial Trade Debate]({{ '/en/skills/adversarial-trade-debate/' | relative_url }})** | Turns a screener candidate into a decisive conviction rating and a sized, risk-vetted trade decision through two staged adversarial debates: a bull-vs-bear debate judged into a 5-tier rating, then an aggressive/conservative/neutral risk debate judged by a PM into a final decision. Consumes valuation/technical/sentiment outputs, hands off to position-sizer | <span class="badge badge-free">No API</span> |
 
 ---
 
@@ -133,6 +139,7 @@ A comprehensive catalog of all 61 Claude Trading Skills organized by category. B
 | **[Edge Social Aggregator]({{ '/en/skills/edge-social-aggregator/' | relative_url }})** | Scores and consolidates social signals (recency × corroboration) from social-signal-ingestor into a per-ticker feed for edge-signal-aggregator; deduplicates each ticker across videos. Does not redo cross-source merge or ranking | <span class="badge badge-free">No API</span> |
 | **[Ticker Enricher]({{ '/en/skills/ticker-enricher/' | relative_url }})** | Enriches ticker signals with company name/sector/industry + recommendation & current price (Yahoo Finance), gain/loss % and days held, emitting a records file for a generic writer. Reusable by any producer with tickers | <span class="badge badge-free">No API</span> |
 | **[Signal Postmortem]({{ '/en/skills/signal-postmortem/' | relative_url }})** | Records and analyzes post-trade outcomes for signals generated by edge pipeline and screeners. Classifies outcomes (true positive, false positive, regime mismatch), generates weight feedback for edge-signal-aggregator and skill improvement backlog entries | <span class="badge badge-optional">FMP Optional</span> |
+| **[Retail Sentiment Ingestor]({{ '/en/skills/retail-sentiment-ingestor/' | relative_url }})** | Ingests real-time retail sentiment per ticker from keyless StockTwits and Reddit (optional X) and emits one deterministically-scored signal note into the shared social vault, with cross-source divergence and a >=90/10 over-extension flag | <span class="badge badge-free">No API</span> |
 
 ---
 
@@ -149,6 +156,7 @@ A comprehensive catalog of all 61 Claude Trading Skills organized by category. B
 | **[Trading Skills Navigator]({{ '/en/skills/trading-skills-navigator/' | relative_url }})** | The on-ramp: from a natural-language trading goal, recommends the right workflow, skillset, API profile, and setup path. Deterministic recommender with honest "no workflow yet" gaps; no-API and beginner paths | <span class="badge badge-free">No API</span> |
 | **Weekly Trade Strategy** | Structured template and workflow for weekly trade strategy reports | <span class="badge badge-workflow">Workflow</span> |
 | **[Write Supabase]({{ '/en/skills/write-supabase/' | relative_url }})** | Generic Supabase table writer: reads a records JSON file and upserts/inserts rows into a caller-named table with a caller-supplied conflict key. Domain-agnostic — reused by any workflow that persists records to Supabase | <span class="badge badge-free">No API</span> |
+| **[Live Analytics Dashboard]({{ '/en/skills/live-analytics-dashboard/' | relative_url }})** | Renders another skill's reports/*.json (watchlist, breadth, or portfolio monitors) as a dashboard: detects the report shape, builds a KPI + sortable-table view, and either publishes it as a snapshot Artifact or serves a live-refreshing local page. CSP-safety gated; no paid data | <span class="badge badge-free">No API</span> |
 
 ---
 
@@ -275,5 +283,13 @@ A comprehensive catalog of all 61 Claude Trading Skills organized by category. B
 | Stockbee Setup Fluency Trainer | Optional | -- | -- |
 | Stockbee 20pct Study | Required | -- | -- |
 | Stockbee Exhaustion Hammer Screener | Required | -- | -- |
+| Dealer Gamma Analyzer | -- | -- | -- |
+| Dynamic Exit Engine | Optional | -- | -- |
+| Intrinsic Value Dcf | Required | -- | -- |
+| Retail Sentiment Ingestor | -- | -- | -- |
+| Short Squeeze Radar | -- | -- | -- |
+| Adversarial Trade Debate | -- | -- | -- |
+| Live Analytics Dashboard | -- | -- | -- |
+| Morning Note Briefing | -- | -- | -- |
 
 "--" means not required. "Optional" means functionality is enhanced but the skill works without it.

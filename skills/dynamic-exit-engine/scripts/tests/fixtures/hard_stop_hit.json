@@ -1,0 +1,8 @@
+{
+  "_doc": "Entry 100, spot_stop_pct 8 -> hard stop 92. Price falls to 91 (a 9% drawdown), which breaches the Phase-1 hard stop and fires an immediate max_loss exit at bar index 2 (never noise-suppressed). Used to assert the Phase-1 hard stop.",
+  "GE": [
+    {"date": "2026-01-02", "close": 100.0},
+    {"date": "2026-01-05", "close": 96.0},
+    {"date": "2026-01-06", "close": 91.0}
+  ]
+}

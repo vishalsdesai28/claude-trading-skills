@@ -1,0 +1,38 @@
+[
+  {
+    "symbol": "FCTA",
+    "companyName": "Fictional Cloud Corp",
+    "date": "2026-07-03",
+    "timing": "BMO",
+    "marketCap": 45000000000,
+    "sector": "Technology",
+    "industry": "Software",
+    "epsEstimated": 1.20,
+    "epsActual": 1.55,
+    "guidance": "raised",
+    "reaction": 8.4
+  },
+  {
+    "symbol": "FRTL",
+    "companyName": "Fictional Retail Inc",
+    "date": "2026-07-03",
+    "timing": "BMO",
+    "marketCap": 12000000000,
+    "sector": "Consumer",
+    "industry": "Retail",
+    "epsEstimated": 0.80,
+    "epsActual": 0.55,
+    "guidance": "lowered",
+    "reaction": -11.2
+  },
+  {
+    "symbol": "FSKD",
+    "companyName": "Fictional Scheduled Co",
+    "date": "2026-07-03",
+    "timing": "AMC",
+    "marketCap": 8000000000,
+    "sector": "Industrials",
+    "industry": "Machinery",
+    "epsEstimated": 0.42
+  }
+]

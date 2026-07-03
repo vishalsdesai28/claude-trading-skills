@@ -1,0 +1,14 @@
+{
+  "min_confidence": 0.65,
+  "aligned_min_confidence": 0.55,
+  "max_concurrent": 5,
+  "max_trade_notional_usd": 10000,
+  "max_daily_loss_usd": -3000,
+  "daily_giveback_halt_pct": 0.5,
+  "daily_giveback_min_peak_usd": 500,
+  "min_dollar_volume_usd": 20000000,
+  "min_short_dollar_volume_usd": 100000000,
+  "max_sector_correlated": 3,
+  "cooldown_min": 30,
+  "allow_pyramid": false
+}

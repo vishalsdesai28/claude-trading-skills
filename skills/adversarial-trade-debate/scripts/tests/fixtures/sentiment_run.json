@@ -1,0 +1,28 @@
+{
+  "schema_version": "1.0",
+  "source_skill": "retail_sentiment_ingestor",
+  "generated_at": "2026-07-01T12:00:00",
+  "week": "2026-W27",
+  "ticker_count": 2,
+  "skipped_no_data": [],
+  "results": [
+    {
+      "ticker": "ACME",
+      "overall_band": "Bullish",
+      "overall_score": 7.4,
+      "direction": "long",
+      "confidence": "high",
+      "divergence": false,
+      "contrarian_overextension": true
+    },
+    {
+      "ticker": "ZZZ",
+      "overall_band": "Bearish",
+      "overall_score": 2.1,
+      "direction": "short",
+      "confidence": "medium",
+      "divergence": false,
+      "contrarian_overextension": false
+    }
+  ]
+}

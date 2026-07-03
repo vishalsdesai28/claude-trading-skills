@@ -1,0 +1,14 @@
+{
+  "timeline": [
+    {
+      "series": "Volume Intensity",
+      "data": [
+        {"date": "20260703T100000Z", "value": 10.0},
+        {"date": "20260703T110000Z", "value": 8.0},
+        {"date": "20260703T120000Z", "value": 12.0},
+        {"date": "20260703T130000Z", "value": 10.0},
+        {"date": "20260703T140000Z", "value": 40.0}
+      ]
+    }
+  ]
+}

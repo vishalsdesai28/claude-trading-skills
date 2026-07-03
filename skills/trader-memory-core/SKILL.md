@@ -223,9 +223,29 @@ List theses with `next_review_date <= as_of`. Use with kanchi-dividend-review-mo
 ```bash
 python3 skills/trader-memory-core/scripts/trader_memory_cli.py review \
   --state-dir state/theses/ postmortem th_aapl_div_20260314_a3f1
+# Alpha vs a non-default benchmark, explicit key/log path:
+python3 .../trader_memory_cli.py review --state-dir state/theses/ postmortem <id> \
+  --benchmark SPY --api-key $FMP_API_KEY --reflection-log state/journal/reflection_log.md
 ```
 
-Generate a structured postmortem in `state/journal/`. If FMP API key is available, includes MAE/MFE (Maximum Adverse/Favorable Excursion) metrics.
+Generate a structured postmortem in `state/journal/`. If an FMP API key is available (`--api-key` or `$FMP_API_KEY`), includes MAE/MFE (Maximum Adverse/Favorable Excursion) metrics.
+
+#### Alpha-attribution reflection
+
+Closing a thesis also computes **alpha** — the trade return minus the benchmark (SPY) return over the *same* holding window — and writes a terse 2-4 sentence reflection to an append-only reflection log (`state/journal/reflection_log.md`). The reflection judges, in order: (1) whether the directional call was correct, **citing the alpha figure rather than the raw return**; (2) which thesis pillar held or failed; (3) one concrete lesson.
+
+- **Benchmark return** uses the first/last daily close of the benchmark over the entry→exit dates (FMP by default; any object exposing `get_daily_closes(symbol, from, to)` — e.g. a yfinance adapter — can be passed via `benchmark_adapter=`). Without price data, alpha is omitted and the raw return is reported instead.
+- **Lifecycle**: each thesis gets a `pending` log entry (the decision) that is then `resolved` with `raw / alpha / holding-days` in the tag plus the reflection body. Writes are atomic (tempfile + `os.replace`) and **idempotent** — re-running the postmortem never duplicates or corrupts an entry. Pass `--no-reflection` to skip.
+- Alpha (`outcome.alpha_pct`, `benchmark`, `benchmark_return_pct`, `raw_return_pct`, `reflection`) is also persisted on the thesis and shown in the postmortem markdown.
+
+**Past-context injection** — feed prior reflections into a future analysis prompt (e.g. adversarial-trade-debate):
+
+```bash
+python3 .../trader_memory_cli.py review --state-dir state/theses/ \
+  past-context --ticker AAPL --n-same 3 --n-cross 3
+```
+
+Returns the N most-recent same-ticker entries **in full** (decision + reflection) plus N cross-ticker **reflection-only** lessons. Python: `reflection_log.get_past_context(log_path, ticker, n_same, n_cross)`.
 
 **Summary statistics:**
 
@@ -256,7 +276,7 @@ Lightweight index for fast queries without loading full YAML files.
 
 ### Journal (state/journal/)
 
-Postmortem markdown reports: `pm_{thesis_id}.md`.
+Postmortem markdown reports: `pm_{thesis_id}.md`. Alpha-attribution reflections are appended to `reflection_log.md` (pending → resolved, one entry per thesis).
 
 ## Key Principles
 
@@ -270,5 +290,7 @@ Postmortem markdown reports: `pm_{thesis_id}.md`.
 
 - `references/thesis_lifecycle.md` — Status states and valid transitions
 - `references/field_mapping.md` — Source skill → canonical field mapping
+- `references/alpha_reflection.md` — Alpha attribution + reflection-log design
 - `schemas/thesis.schema.json` — JSON Schema for thesis validation
+- `scripts/reflection_log.py` — Reflection-log lifecycle + `get_past_context()`
 - `../../examples/workflows/trade-memory-loop/sample-run-full-path/` — Worked end-to-end Plan → Trade → Record → Postmortem → Backtest → Journal example

@@ -3,7 +3,7 @@ layout: default
 title: "Robinhood Trade Executor"
 grand_parent: English
 parent: Skill Guides
-nav_order: 43
+nav_order: 50
 lang_peer: /ja/skills/robinhood-trade-executor/
 permalink: /en/skills/robinhood-trade-executor/
 generated: true

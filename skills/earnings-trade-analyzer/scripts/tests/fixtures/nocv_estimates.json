@@ -1,0 +1,10 @@
+{
+  "_note": "Synthetic yfinance-shaped estimate data (fictional ticker NOCV) with no analyst coverage: every estimate frame is empty. estimate_revision.fetch_estimate_data returns this shape for small-cap / foreign names Yahoo Finance does not cover.",
+  "ticker": "NOCV",
+  "earnings_estimate": {},
+  "revenue_estimate": {},
+  "eps_trend": {},
+  "eps_revisions": {},
+  "growth_estimates": {},
+  "earnings_history": []
+}

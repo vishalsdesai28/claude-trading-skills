@@ -1,0 +1,8 @@
+{
+  "_doc": "Entry 100, ATR 3 (3% of entry). Rises to 104 (peak profit 4% -- below the first phase-2 tier at 5%), then pulls back to 102 (a 2% give-back from peak). Default phase-2 floor at 104 is 100+(4*0.70)=102.8, so mark 102 < 102.8 would breach and exit. With the ATR noise band (mult 1.0 -> tolerated pull-back 3%) the 2% give-back is inside the band while still sub-first-tier, so the engine HOLDS instead. Used to assert noise-band suppression.",
+  "NVDA": [
+    {"date": "2026-01-02", "close": 100.0},
+    {"date": "2026-01-05", "close": 104.0},
+    {"date": "2026-01-06", "close": 102.0}
+  ]
+}

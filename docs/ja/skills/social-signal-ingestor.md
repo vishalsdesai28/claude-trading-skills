@@ -3,7 +3,7 @@ layout: default
 title: "Social Signal Ingestor"
 grand_parent: 日本語
 parent: スキルガイド
-nav_order: 50
+nav_order: 58
 lang_peer: /en/skills/social-signal-ingestor/
 permalink: /ja/skills/social-signal-ingestor/
 generated: true

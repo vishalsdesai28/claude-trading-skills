@@ -1,0 +1,9 @@
+{
+  "schema_version": "1.0",
+  "generated_at": "2026-07-03T07:00:00Z",
+  "exposure_ceiling_pct": 75,
+  "bias": "GROWTH",
+  "participation": "BROAD",
+  "recommendation": "NEW_ENTRY_ALLOWED",
+  "confidence": "HIGH"
+}

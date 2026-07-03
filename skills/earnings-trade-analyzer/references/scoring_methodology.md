@@ -2,9 +2,11 @@
 
 ## Overview
 
-The Earnings Trade Analyzer uses a 5-factor weighted scoring system to evaluate post-earnings stock setups. Each stock receives a composite score (0-100) and a letter grade (A/B/C/D).
+The Earnings Trade Analyzer uses a weighted scoring system to evaluate post-earnings stock setups. Each stock receives a composite score (0-100) and a letter grade (A/B/C/D).
 
-## 5-Factor Scoring System
+By default it scores **5 price/volume factors**. When `--with-estimate-revision` is enabled, a **6th analyst estimate-revision momentum factor** is added at 15% weight (see "Factor 6" and "6-Factor Weighting" below), with the other five factors reduced pro-rata so the weights still sum to exactly 1.0.
+
+## 5-Factor Scoring System (default)
 
 ### Factor 1: Gap Size (25% Weight)
 
@@ -74,6 +76,34 @@ Current price position relative to the 50-day Simple Moving Average. Stocks abov
 | >= -5%             | 35    |
 | < -5%              | 15    |
 
+## Factor 6: Analyst Estimate-Revision Momentum (optional, 15% Weight)
+
+Enabled with `--with-estimate-revision` (keyless via Yahoo Finance / yfinance; no FMP API budget impact). This factor captures whether the analyst community is quietly raising or cutting numbers on the stock — a signal that is orthogonal to the price/volume factors and often leads price. A candidate with a strong gap but a fresh wave of downward revisions is a lower-quality setup than the price alone suggests.
+
+**Inputs (from yfinance):**
+- `earnings_estimate` / `revenue_estimate` — current EPS/revenue consensus with high/low spread per period (0q, +1q, 0y, +1y)
+- `eps_trend` — EPS-estimate drift over 7/30/60/90 days (near-term period preferred)
+- `eps_revisions` — up-vs-down revision breadth counts (7d/30d)
+- `earnings_history` — estimate-vs-actual calibration, used as a confidence weight
+- `growth_estimates` — company vs industry/sector/index growth (context only)
+
+**Signed momentum score (0-100, 50 = neutral):**
+1. **Drift signal** — near-term EPS drift over 30d and 90d, each saturating at ±1 (a +10% 30-day or +20% 90-day drift maxes out).
+2. **Breadth signal** — aggregate net 30-day revisions / total, clamped to [-1, 1].
+3. **Raw signal** = 0.6 × drift + 0.4 × breadth, in [-1, 1].
+4. **Calibration confidence** (0.5–1.0) damps the raw signal toward neutral when the analyst track record is weak or unavailable. Calibration = 0.5 × directional consistency + 0.5 × surprise tightness (average absolute EPS surprise within ~15% = tight).
+5. **Score** = clamp(50 + 50 × raw × confidence, 0, 100).
+
+| Score band | Label | Interpretation |
+|------------|-------|----------------|
+| >= 75 | strong_upgrade | Numbers rising fast, broad upward revisions |
+| 58-74 | upgrade | Rising estimates / net up-revisions |
+| 42-57 | neutral | Flat or mixed |
+| 25-41 | downgrade | Falling estimates / net down-revisions |
+| < 25 | strong_downgrade | Numbers being cut broadly |
+
+Stocks with **no analyst coverage** receive a neutral score of 50 and are not penalized — a candidate is only penalized for actual downward revisions, never for the absence of data.
+
 ## Grade Thresholds
 
 | Grade | Score Range | Description |
@@ -99,9 +129,20 @@ The scoring system is designed to identify stocks with the highest probability o
 
 ## Composite Score Formula
 
+**5-factor (default):**
+
 ```
 composite_score = (gap_score * 0.25) + (trend_score * 0.30) + (volume_score * 0.20)
                 + (ma200_score * 0.15) + (ma50_score * 0.10)
 ```
 
-The weights sum to exactly 1.0 (100%).
+## 6-Factor Weighting (with `--with-estimate-revision`)
+
+When the estimate-revision factor is supplied, the composite uses the 6-factor weight set (`scorer.COMPONENT_WEIGHTS_6`):
+
+```
+composite_score = (gap_score * 0.22) + (trend_score * 0.26) + (volume_score * 0.17)
+                + (ma200_score * 0.12) + (ma50_score * 0.08) + (revision_score * 0.15)
+```
+
+Both weight sets sum to exactly 1.0 (100%). The 5-factor path is unchanged and remains the default, so existing behavior and downstream consumers (e.g. PEAD Screener Mode B) are unaffected unless the flag is used.

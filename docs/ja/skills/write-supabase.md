@@ -3,7 +3,7 @@ layout: default
 title: "Write Supabase"
 grand_parent: 日本語
 parent: スキルガイド
-nav_order: 67
+nav_order: 75
 lang_peer: /en/skills/write-supabase/
 permalink: /ja/skills/write-supabase/
 generated: true

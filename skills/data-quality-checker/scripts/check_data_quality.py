@@ -670,6 +670,111 @@ def check_units(content: str) -> list[Finding]:
 
 
 # ---------------------------------------------------------------------------
+# Verified-snapshot cross-check
+# ---------------------------------------------------------------------------
+
+# Words that introduce a price *level* (support/resistance/target) claim.
+_LEVEL_ROLE_PAT = re.compile(
+    r"(support|resistance|target|price target|"
+    r"サポート|レジスタンス|支持|抵抗|目標)"
+    r"[^\n$]{0,25}\$([0-9,]+(?:\.[0-9]+)?)",
+    re.IGNORECASE,
+)
+
+# Words that assert the *current* price (should match the verified close).
+_CURRENT_PRICE_PAT = re.compile(
+    r"(trading at|closed at|last close|currently (?:at|trading)|"
+    r"current price|now at|price of|現在値|終値)"
+    r"[^\n$]{0,20}\$([0-9,]+(?:\.[0-9]+)?)",
+    re.IGNORECASE,
+)
+
+
+def _parse_price(raw: str) -> float | None:
+    try:
+        return float(raw.replace(",", ""))
+    except ValueError:
+        return None
+
+
+def check_snapshot(content: str, snapshot: dict | None = None) -> list[Finding]:
+    """Cross-check price levels in a report against a verified market snapshot.
+
+    ``snapshot`` is the JSON produced by ``market_snapshot.py``
+    (``build_snapshot``). When absent the check is a no-op so that default
+    ``run_checks`` runs remain unaffected. Flags price levels that fall well
+    outside the verified recent range (likely fabricated or scale-mismatched)
+    and stated current prices that contradict the verified latest close.
+    """
+    if not snapshot:
+        return []
+
+    latest = snapshot.get("latest_row", {})
+    latest_close = latest.get("close")
+    latest_date = latest.get("date", "?")
+    recent_high = snapshot.get("recent_high")
+    recent_low = snapshot.get("recent_low")
+    atr = (snapshot.get("indicators") or {}).get("atr")
+
+    if latest_close is None or recent_high is None or recent_low is None:
+        return []
+
+    # Tolerance band: recent range expanded by 3x ATR (fall back to 15% of the
+    # latest close when ATR is unavailable). Levels outside this are suspect.
+    pad = 3.0 * atr if atr else 0.15 * latest_close
+    band_low = recent_low - pad
+    band_high = recent_high + pad
+
+    findings: list[Finding] = []
+
+    for m in _LEVEL_ROLE_PAT.finditer(content):
+        price = _parse_price(m.group(2))
+        if price is None or price <= 0:
+            continue
+        if price < band_low or price > band_high:
+            line_num = content[: m.start()].count("\n") + 1
+            findings.append(
+                Finding(
+                    severity="WARNING",
+                    category="snapshot",
+                    message=(
+                        f"Cited {m.group(1).lower()} level ${price:,.2f} is outside "
+                        f"the verified price band [${band_low:,.2f}, ${band_high:,.2f}] "
+                        f"(recent range ${recent_low:,.2f}-${recent_high:,.2f}). "
+                        f"Possible fabricated or scale-mismatched level."
+                    ),
+                    line_number=line_num,
+                    context=m.group(0).strip(),
+                )
+            )
+
+    for m in _CURRENT_PRICE_PAT.finditer(content):
+        price = _parse_price(m.group(2))
+        if price is None or price <= 0:
+            continue
+        rel_diff = abs(price - latest_close) / latest_close
+        if rel_diff <= 0.05:
+            continue
+        severity = "ERROR" if rel_diff > 0.25 else "WARNING"
+        line_num = content[: m.start()].count("\n") + 1
+        findings.append(
+            Finding(
+                severity=severity,
+                category="snapshot",
+                message=(
+                    f"Stated current price ${price:,.2f} differs from the verified "
+                    f"close ${latest_close:,.2f} ({latest_date}) by {rel_diff * 100:.1f}%. "
+                    f"Verify against the source-of-truth snapshot."
+                ),
+                line_number=line_num,
+                context=m.group(0).strip(),
+            )
+        )
+
+    return findings
+
+
+# ---------------------------------------------------------------------------
 # Main orchestration
 # ---------------------------------------------------------------------------
 
@@ -679,6 +784,7 @@ ALL_CHECKS = {
     "dates": check_dates,
     "allocations": check_allocations,
     "units": check_units,
+    "snapshot": check_snapshot,
 }
 
 
@@ -687,6 +793,7 @@ def run_checks(
     checks: list[str] | None = None,
     as_of: date | None = None,
     filepath: str | None = None,
+    snapshot: dict | None = None,
 ) -> list[Finding]:
     """Run specified checks (or all) on content."""
     if checks is None:
@@ -699,6 +806,8 @@ def run_checks(
             continue
         if check_name == "dates":
             all_findings.extend(func(content, as_of, filepath))
+        elif check_name == "snapshot":
+            all_findings.extend(func(content, snapshot))
         else:
             all_findings.extend(func(content))
 
@@ -754,6 +863,13 @@ def build_parser() -> argparse.ArgumentParser:
         "--as-of",
         help="Reference date for year inference (YYYY-MM-DD)",
     )
+    parser.add_argument(
+        "--snapshot",
+        help=(
+            "Path to a verified market snapshot JSON (from market_snapshot.py) "
+            "to cross-check cited price levels against"
+        ),
+    )
     return parser
 
 
@@ -778,7 +894,19 @@ def main() -> None:
             print(f"Error: Invalid date format: {args.as_of}", file=sys.stderr)
             sys.exit(1)
 
-    findings = run_checks(content, checks, as_of_date, filepath=args.file)
+    snapshot: dict | None = None
+    if args.snapshot:
+        if not os.path.isfile(args.snapshot):
+            print(f"Error: Snapshot file not found: {args.snapshot}", file=sys.stderr)
+            sys.exit(1)
+        try:
+            with open(args.snapshot, encoding="utf-8") as sf:
+                snapshot = json.load(sf)
+        except (OSError, json.JSONDecodeError) as exc:
+            print(f"Error: Could not parse snapshot: {exc}", file=sys.stderr)
+            sys.exit(1)
+
+    findings = run_checks(content, checks, as_of_date, filepath=args.file, snapshot=snapshot)
 
     # Always exit 0 (advisory mode) unless script error
     os.makedirs(args.output_dir, exist_ok=True)

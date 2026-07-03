@@ -1,0 +1,5 @@
+{
+  "symbol": "NVDA",
+  "composite": 82.0,
+  "blocked_reasons": ["notional cap reached", "max positions reached"]
+}

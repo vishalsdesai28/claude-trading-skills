@@ -1,0 +1,28 @@
+{
+  "ticker": "ACME",
+  "disclaimer": "Research/educational output. Not financial advice.",
+  "snapshot": {
+    "current_price": 100.0,
+    "market_cap": 50000000000.0,
+    "sector": "Technology",
+    "industry": "Software",
+    "source": "input-json"
+  },
+  "sector_routing": {
+    "method": "dcf_primary",
+    "note": "Mature cash-flow name: DCF primary, cross-checked by peers."
+  },
+  "blended": {
+    "fair_value": 130.0,
+    "weights": {"dcf": 0.6, "relative": 0.4},
+    "upside_pct": 0.30
+  },
+  "scenarios": {
+    "bull": {"fair_value": 165.0},
+    "base": {"fair_value": 130.0},
+    "bear": {"fair_value": 92.0}
+  },
+  "guardrail_warnings": [
+    "Terminal value is 78% of enterprise value; the model leans on terminal assumptions."
+  ]
+}

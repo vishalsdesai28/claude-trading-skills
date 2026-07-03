@@ -1,0 +1,5 @@
+[
+  {"ticker": "GME", "settlement_date": "2026-06-30", "short_interest": 25000000, "avg_daily_volume": 3000000},
+  {"ticker": "AMC", "settlement_date": "2026-06-30", "short_interest": 20000000, "avg_daily_volume": 40000000, "days_to_cover": 0.5},
+  {"ticker": "AAPL", "settlement_date": "2026-06-30", "short_interest": 130000000, "avg_daily_volume": 60000000}
+]

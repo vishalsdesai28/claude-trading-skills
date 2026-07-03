@@ -1,14 +1,16 @@
 ---
 name: data-quality-checker
-description: Validate data quality in market analysis documents and blog articles before publication. Use when checking for price scale inconsistencies (ETF vs futures), instrument notation errors, date/day-of-week mismatches, allocation total errors, and unit mismatches. Supports English and Japanese content. Advisory mode -- flags issues as warnings for human review, not as blockers.
+description: Validate data quality in market analysis documents and blog articles before publication. Use when checking for price scale inconsistencies (ETF vs futures), instrument notation errors, date/day-of-week mismatches, allocation total errors, unit mismatches, and fabricated or inconsistent price/support/resistance levels cross-checked against a verified market data snapshot. Supports English and Japanese content. Advisory mode -- flags issues as warnings for human review, not as blockers.
 ---
 
 ## Overview
 
 Detect common data quality issues in market analysis documents before
-publication. The checker validates five categories: price scale consistency,
-instrument notation, date/weekday accuracy, allocation totals, and unit usage.
-All findings are advisory -- they flag potential issues for human review rather
+publication. The checker validates six categories: price scale consistency,
+instrument notation, date/weekday accuracy, allocation totals, unit usage, and
+verified-snapshot consistency (cited price/support/resistance levels
+cross-checked against a deterministic ground-truth market snapshot). All
+findings are advisory -- they flag potential issues for human review rather
 than blocking publication.
 
 ## When to Use
@@ -18,12 +20,20 @@ than blocking publication.
 - When reviewing translated documents (English/Japanese) for data accuracy
 - When combining data from multiple sources (FRED, FMP, FINVIZ) into one report
 - As a pre-flight check for any document containing financial data
+- Before publishing a single-ticker technical write-up that cites specific
+  price, support, or resistance levels -- build a verified snapshot first and
+  cross-check the draft against it to catch confabulated or scale-mismatched
+  numbers
 
 ## Prerequisites
 
 - Python 3.9+
-- No external API keys required
-- No third-party Python packages required (uses only standard library)
+- The core checks (price scale, notation, dates, allocations, units) require no
+  API keys and no third-party packages (standard library only)
+- The optional verified-snapshot workflow (`market_snapshot.py`) fetches OHLCV
+  from yfinance (no key) or FMP (`FMP_API_KEY` or `--api-key`). Indicators are
+  computed in pure Python, so the snapshot *cross-check* itself needs no
+  packages -- it consumes a snapshot JSON that is already on disk
 
 ## Workflow
 
@@ -62,6 +72,45 @@ python3 skills/data-quality-checker/scripts/check_data_quality.py \
   --as-of 2026-02-28
 ```
 
+### Step 2b: Verified Market Snapshot Cross-Check (optional)
+
+For single-ticker technical reports that cite exact price, support, or
+resistance levels, build a deterministic ground-truth snapshot and cross-check
+the draft against it. This catches confabulated numbers -- levels far outside
+the verified recent range, or a stated current price that contradicts the
+verified close.
+
+First build the snapshot (look-ahead rows after the analysis date are excluded
+defensively; the fixed 11-indicator set -- EMA/SMA/RSI/Bollinger/MACD/ATR -- is
+computed in pure Python):
+
+```bash
+# yfinance (no API key)
+python3 skills/data-quality-checker/scripts/market_snapshot.py \
+  --ticker AAPL --date 2026-02-28 --output-dir reports/
+
+# FMP (requires FMP_API_KEY or --api-key)
+python3 skills/data-quality-checker/scripts/market_snapshot.py \
+  --ticker AAPL --date 2026-02-28 --source fmp --output-dir reports/
+```
+
+The snapshot script writes a `market_snapshot_<TICKER>_<timestamp>.md`
+(ground-truth text block with guardrail language) and a matching `.json`
+(structured snapshot). Present the `.md` block to any downstream model as the
+single source of truth for exact numbers.
+
+Then run the checker with the snapshot JSON to cross-check the draft report:
+
+```bash
+python3 skills/data-quality-checker/scripts/check_data_quality.py \
+  --file path/to/aapl_writeup.md \
+  --snapshot reports/market_snapshot_AAPL_2026-02-28_143000.json \
+  --output-dir reports/
+```
+
+The `snapshot` check is a no-op unless `--snapshot` is supplied, so default
+runs are unaffected.
+
 ### Step 3: Load Reference Standards
 
 Read the relevant reference documents to contextualize findings:
@@ -79,9 +128,11 @@ Use these references to explain findings and suggest corrections.
 Examine each finding in the output:
 
 - **ERROR** -- High confidence issues (e.g., date-weekday mismatches verified
-  by calendar computation). Strongly recommend correction.
+  by calendar computation, or a stated current price contradicting the verified
+  snapshot close by more than 25%). Strongly recommend correction.
 - **WARNING** -- Likely issues that need human judgment (e.g., price scale
-  anomalies, notation inconsistencies, allocation sums off by more than 0.5%).
+  anomalies, notation inconsistencies, allocation sums off by more than 0.5%,
+  cited support/resistance levels outside the verified snapshot band).
 - **INFO** -- Informational notes (e.g., mixed bp/% usage that may be
   intentional).
 
@@ -111,6 +162,41 @@ base. Suggest specific corrections for each issue.
 }
 ```
 
+A `snapshot`-category finding looks like:
+
+```json
+{
+  "severity": "WARNING",
+  "category": "snapshot",
+  "message": "Cited support level $50.00 is outside the verified price band [$131.00, $169.00] (recent range $140.00-$160.00). Possible fabricated or scale-mismatched level.",
+  "line_number": 12,
+  "context": "support at $50"
+}
+```
+
+### Snapshot Input Shape (consumed by the `snapshot` check)
+
+`market_snapshot.py` emits, and the `--snapshot` check consumes, this JSON:
+
+```json
+{
+  "symbol": "AAPL",
+  "analysis_date": "2026-02-28",
+  "latest_row": {"date": "2026-02-27", "open": 0, "high": 0, "low": 0, "close": 150.0, "volume": 0},
+  "indicators": {"close_10_ema": 0, "close_50_sma": 0, "close_200_sma": null, "rsi": 0, "boll": 0, "boll_ub": 0, "boll_lb": 0, "macd": 0, "macds": 0, "macdh": 0, "atr": 3.0},
+  "recent_closes": [{"date": "2026-02-27", "close": 150.0}],
+  "recent_high": 160.0,
+  "recent_low": 140.0,
+  "guardrail": "Treat this snapshot as the single source of truth ..."
+}
+```
+
+The cross-check derives a tolerance band of `[recent_low - 3*ATR,
+recent_high + 3*ATR]` (falling back to +/-15% of the latest close when ATR is
+`null`). Cited support/resistance/target levels outside the band are flagged,
+as are stated current prices that differ from `latest_row.close` by more than
+5% (WARNING) or 25% (ERROR).
+
 ### Markdown Report Structure
 
 ```markdown
@@ -130,7 +216,10 @@ base. Suggest specific corrections for each issue.
 
 ## Resources
 
-- `scripts/check_data_quality.py` -- Main validation script
+- `scripts/check_data_quality.py` -- Main validation script (includes the
+  `snapshot` cross-check)
+- `scripts/market_snapshot.py` -- Builds the verified ground-truth market
+  snapshot (OHLCV + fixed 11-indicator set) and renders the guardrail text block
 - `references/instrument_notation_standard.md` -- Notation and price scale reference
 - `references/common_data_errors.md` -- Common error patterns and prevention
 
@@ -159,3 +248,12 @@ base. Suggest specific corrections for each issue.
    of digits before the decimal point) rather than absolute price ranges. This
    approach is resilient to price changes over time while still catching
    ETF/futures confusion errors.
+
+6. **Verified snapshot as source of truth**: The `snapshot` check never
+   invents a "correct" number. It flags cited levels that fall well outside the
+   deterministically computed recent range (or a stated current price that
+   contradicts the verified close), and defers the judgment to a human. The
+   look-ahead cutoff is re-applied defensively when the snapshot is built so no
+   post-analysis-date row can leak into the ground truth. Indicators are
+   computed in pure Python with documented conventions (see `market_snapshot.py`
+   module docstring) so the snapshot is byte-stable across runs.

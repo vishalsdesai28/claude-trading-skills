@@ -1,0 +1,7 @@
+{
+  "ticker": "AAPL",
+  "blackout": true,
+  "catalyst_type": "earnings",
+  "severity": "high",
+  "headline": "Fictional Corp reports Q3 earnings in 2 days"
+}

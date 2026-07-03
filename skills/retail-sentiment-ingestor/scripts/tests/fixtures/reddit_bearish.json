@@ -1,0 +1,19 @@
+{
+  "kind": "Listing",
+  "data": {
+    "children": [
+      {"kind": "t3", "data": {
+        "title": "Shorting NVDA here, puts loaded",
+        "selftext": "this is overvalued and the chart is a clear downtrend, bearish",
+        "score": 640, "num_comments": 205, "created_utc": 1751551200, "subreddit": "wallstreetbets"}},
+      {"kind": "t3", "data": {
+        "title": "NVDA dump incoming, selling my shares",
+        "selftext": "taking profits, looks like it will tank into earnings",
+        "score": 300, "num_comments": 90, "created_utc": 1751547600, "subreddit": "stocks"}},
+      {"kind": "t3", "data": {
+        "title": "Neutral take on NVDA",
+        "selftext": "just holding and watching for now",
+        "score": 15, "num_comments": 5, "created_utc": 1751544000, "subreddit": "investing"}}
+    ]
+  }
+}

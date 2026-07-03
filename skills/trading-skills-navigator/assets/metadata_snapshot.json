@@ -2,6 +2,22 @@
   "schema_version": 1,
   "skills": [
     {
+      "category": "trade-planning",
+      "difficulty": "advanced",
+      "display_name": "Adversarial Trade Debate",
+      "id": "adversarial-trade-debate",
+      "integrations": [
+        {
+          "id": "local_calculation",
+          "requirement": "not_required",
+          "type": "calculation"
+        }
+      ],
+      "status": "beta",
+      "summary": "Turn a screener candidate into a decisive conviction rating and a sized, risk-vetted trade decision through two staged adversarial debates — a bull-vs-bear debate judged into a 5-tier rating, then an aggressive/conservative/neutral risk debate judged by a Portfolio Manager into a final, possibly-resized decision.",
+      "timeframe": "event-driven"
+    },
+    {
       "category": "strategy-research",
       "difficulty": "advanced",
       "display_name": "Backtest Expert",
@@ -75,11 +91,42 @@
           "id": "local_calculation",
           "requirement": "not_required",
           "type": "calculation"
+        },
+        {
+          "id": "yfinance",
+          "requirement": "optional",
+          "type": "market_data"
+        },
+        {
+          "id": "fmp",
+          "requirement": "optional",
+          "type": "market_data"
         }
       ],
       "status": "production",
       "summary": "Validate data quality in market analysis documents and blog articles before publication.",
       "timeframe": "event-driven"
+    },
+    {
+      "category": "advanced-satellite",
+      "difficulty": "advanced",
+      "display_name": "Dealer Gamma Analyzer",
+      "id": "dealer-gamma-analyzer",
+      "integrations": [
+        {
+          "id": "cboe",
+          "requirement": "required",
+          "type": "web"
+        },
+        {
+          "id": "local_calculation",
+          "requirement": "not_required",
+          "type": "calculation"
+        }
+      ],
+      "status": "beta",
+      "summary": "Quantify dealer options gamma (GEX) positioning for an equity or index from free CBOE ~15-minute-delayed options data — signed dealer gamma per strike, total GEX under two dealer conventions, call/put walls as S/R levels, gamma-flip strike, max pain, and positive/negative-gamma regime classification. No paid feed required.",
+      "timeframe": "daily"
     },
     {
       "category": "core-portfolio",
@@ -135,6 +182,27 @@
       "timeframe": "research"
     },
     {
+      "category": "trade-planning",
+      "difficulty": "intermediate",
+      "display_name": "Dynamic Exit Engine",
+      "id": "dynamic-exit-engine",
+      "integrations": [
+        {
+          "id": "fmp",
+          "requirement": "optional",
+          "type": "market_data"
+        },
+        {
+          "id": "local_calculation",
+          "requirement": "not_required",
+          "type": "calculation"
+        }
+      ],
+      "status": "beta",
+      "summary": "Manage an adaptive trailing exit for an open long equity position via a two-phase trailing-stop FSM (hard stop -> ratcheting profit floor) with breakeven lock, stale-flat timeout, ATR noise band, and consecutive-breach confirmation. Replays deterministically over an OHLCV price series and persists a JSON tracker snapshot.",
+      "timeframe": "daily"
+    },
+    {
       "category": "meta",
       "difficulty": "beginner",
       "display_name": "Earnings Calendar",
@@ -159,6 +227,11 @@
         {
           "id": "fmp",
           "requirement": "required",
+          "type": "market_data"
+        },
+        {
+          "id": "yfinance",
+          "requirement": "optional",
           "type": "market_data"
         }
       ],
@@ -336,6 +409,11 @@
           "id": "finviz",
           "requirement": "optional",
           "type": "screener"
+        },
+        {
+          "id": "yfinance",
+          "requirement": "optional",
+          "type": "market_data"
         }
       ],
       "status": "production",
@@ -391,6 +469,32 @@
       "timeframe": "research"
     },
     {
+      "category": "advanced-satellite",
+      "difficulty": "advanced",
+      "display_name": "Intrinsic Value (DCF)",
+      "id": "intrinsic-value-dcf",
+      "integrations": [
+        {
+          "id": "fmp",
+          "requirement": "required",
+          "type": "market_data"
+        },
+        {
+          "id": "yfinance",
+          "requirement": "optional",
+          "type": "market_data"
+        },
+        {
+          "id": "local_calculation",
+          "requirement": "not_required",
+          "type": "calculation"
+        }
+      ],
+      "status": "beta",
+      "summary": "Produce a triangulated intrinsic-value estimate for a US ticker by blending a discounted-cash-flow model (CAPM WACC, 5-year FCFF fade, dual terminal value, recalculated WACC x terminal-growth sensitivity grid), peer-median relative multiples, and an optional sum-of-the-parts, with Bull/Base/Bear scenarios, guardrail gates, and sector-aware method routing.",
+      "timeframe": "research"
+    },
+    {
       "category": "core-portfolio",
       "difficulty": "beginner",
       "display_name": "Kanchi Dividend Review Monitor",
@@ -439,6 +543,22 @@
       "timeframe": "event-driven"
     },
     {
+      "category": "meta",
+      "difficulty": "intermediate",
+      "display_name": "Live Analytics Dashboard",
+      "id": "live-analytics-dashboard",
+      "integrations": [
+        {
+          "id": "local_calculation",
+          "requirement": "not_required",
+          "type": "calculation"
+        }
+      ],
+      "status": "beta",
+      "summary": "Render another skill's reports/*.json (watchlist, breadth, or portfolio monitors) as a dashboard — detect the report shape, build a KPI + sortable-table view, and either publish it as a snapshot Artifact or serve it as a live-refreshing local page. Every generated page is CSP-safety gated before serving.",
+      "timeframe": "daily"
+    },
+    {
       "category": "market-regime",
       "difficulty": "advanced",
       "display_name": "Macro Regime Detector",
@@ -447,6 +567,11 @@
         {
           "id": "yfinance_or_csv",
           "requirement": "recommended",
+          "type": "market_data"
+        },
+        {
+          "id": "fred",
+          "requirement": "optional",
           "type": "market_data"
         }
       ],
@@ -501,6 +626,11 @@
           "id": "websearch",
           "requirement": "required",
           "type": "web"
+        },
+        {
+          "id": "gdelt",
+          "requirement": "optional",
+          "type": "web"
         }
       ],
       "status": "production",
@@ -521,6 +651,22 @@
       ],
       "status": "production",
       "summary": "Detects market top probability using O'Neil Distribution Days, Minervini Leading Stock Deterioration, and Monty Defensive Sector Rotation.",
+      "timeframe": "daily"
+    },
+    {
+      "category": "market-regime",
+      "difficulty": "intermediate",
+      "display_name": "Morning Note Briefing",
+      "id": "morning-note-briefing",
+      "integrations": [
+        {
+          "id": "local_calculation",
+          "requirement": "not_required",
+          "type": "calculation"
+        }
+      ],
+      "status": "beta",
+      "summary": "Assemble a fixed-format, two-minute pre-market morning note by composing the JSON outputs of existing skills — overnight earnings (earnings-calendar), pre-market movers and sector performance (sector-analyst plus a price feed), today's macro calendar (economic-calendar-fetcher), and live catalysts (market-news-analyst / gdelt-news-catalyst) — leading with the single most important development, a directional Top Call, and actionable long/short ideas.",
       "timeframe": "daily"
     },
     {
@@ -618,11 +764,52 @@
           "id": "local_calculation",
           "requirement": "not_required",
           "type": "calculation"
+        },
+        {
+          "id": "yfinance",
+          "requirement": "optional",
+          "type": "market_data"
+        },
+        {
+          "id": "fmp",
+          "requirement": "optional",
+          "type": "market_data"
         }
       ],
       "status": "production",
       "summary": "Calculate risk-based position sizes for long stock trades.",
       "timeframe": "event-driven"
+    },
+    {
+      "category": "strategy-research",
+      "difficulty": "intermediate",
+      "display_name": "Retail Sentiment Ingestor",
+      "id": "retail-sentiment-ingestor",
+      "integrations": [
+        {
+          "id": "stocktwits",
+          "requirement": "required",
+          "type": "web"
+        },
+        {
+          "id": "reddit",
+          "requirement": "required",
+          "type": "web"
+        },
+        {
+          "id": "x",
+          "requirement": "optional",
+          "type": "web"
+        },
+        {
+          "id": "local_calculation",
+          "requirement": "not_required",
+          "type": "calculation"
+        }
+      ],
+      "status": "beta",
+      "summary": "Ingest real-time retail sentiment for a list of tickers from keyless StockTwits cashtag streams and Reddit (r/wallstreetbets, r/stocks, r/investing), plus an optional X path, and emit one deterministically-scored signal note per ticker into the shared social vault with sentiment band, 0-10 score, cross-source divergence, and a >=90/10 StockTwits over-extension flag.",
+      "timeframe": "daily"
     },
     {
       "category": "trade-planning",
@@ -650,6 +837,11 @@
           "id": "websearch",
           "requirement": "required",
           "type": "web"
+        },
+        {
+          "id": "polymarket",
+          "requirement": "optional",
+          "type": "web"
         }
       ],
       "status": "production",
@@ -671,6 +863,32 @@
       "status": "production",
       "summary": "This skill should be used when analyzing sector rotation patterns and market cycle positioning.",
       "timeframe": "weekly"
+    },
+    {
+      "category": "advanced-satellite",
+      "difficulty": "intermediate",
+      "display_name": "Short-Squeeze Radar",
+      "id": "short-squeeze-radar",
+      "integrations": [
+        {
+          "id": "finra",
+          "requirement": "required",
+          "type": "web"
+        },
+        {
+          "id": "short_interest_file",
+          "requirement": "optional",
+          "type": "local_file"
+        },
+        {
+          "id": "local_calculation",
+          "requirement": "not_required",
+          "type": "calculation"
+        }
+      ],
+      "status": "beta",
+      "summary": "Rank US equities by short-squeeze potential from free FINRA data — Reg SHO daily short-volume files (rising short-volume-ratio inflection) plus optional bi-monthly short interest for days-to-cover ranking — classifying each name as crowded-short / neutral / low-pressure. No API key required.",
+      "timeframe": "daily"
     },
     {
       "category": "trade-memory",

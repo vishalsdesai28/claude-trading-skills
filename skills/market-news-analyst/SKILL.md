@@ -1,6 +1,6 @@
 ---
 name: market-news-analyst
-description: This skill should be used when analyzing recent market-moving news events and their impact on equity markets and commodities. Use this skill when the user requests analysis of major financial news from the past 10 days, wants to understand market reactions to monetary policy decisions (FOMC, ECB, BOJ), needs assessment of geopolitical events' impact on commodities, or requires comprehensive review of earnings announcements from mega-cap stocks. The skill automatically collects news using WebSearch/WebFetch tools and produces impact-ranked analysis reports. All analysis thinking and output are conducted in English.
+description: This skill should be used when analyzing recent market-moving news events and their impact on equity markets and commodities. Use this skill when the user requests analysis of major financial news from the past 10 days, wants to understand market reactions to monetary policy decisions (FOMC, ECB, BOJ), needs assessment of geopolitical events' impact on commodities, requires comprehensive review of earnings announcements from mega-cap stocks, or wants to detect a breaking/surging news catalyst on a specific ticker. The skill collects news using WebSearch/WebFetch tools and produces impact-ranked analysis reports, and includes a free coverage-surge catalyst detector (GDELT 2.0 + public RSS wires, no API key) that emits a news-blackout risk-gate signal. All analysis thinking and output are conducted in English.
 ---
 
 # Market News Analyst
@@ -34,6 +34,61 @@ Example user requests:
 - "What were the most important market-moving events this week?"
 - "Analyze recent geopolitical news and commodity price reactions"
 - "Review mega-cap tech earnings and their market impact"
+
+## Coverage-Surge Catalyst Detector (scripts/gdelt_catalyst.py)
+
+Use this script for a systematic, deterministic pre-filter before (or alongside) the qualitative WebSearch workflow, and whenever the goal is to detect a *breaking* or *surging* news catalyst on a specific ticker or topic. It is FREE and requires NO API key: it queries the GDELT 2.0 DOC API (global news, re-indexed every ~15 min, full-text searchable) for a coverage-volume timeline plus the latest matching articles, and supplements them with keyword-filtered public RSS wires (Yahoo Finance, CNBC).
+
+**What it computes:**
+- `surge_x` — the latest coverage bin divided by the median of the earlier bins (how far above its own baseline coverage is running).
+- `breaking` — True when `surge_x >= 2.5` and coverage is nonzero (a developing catalyst); `elevated` when `surge_x >= 1.5`.
+- The freshest matching headlines (newest first), de-duplicated across GDELT and RSS and filtered to a freshness window (default 48h) so a stale article never trips the gate.
+- Fetches are TTL-cached (default 5 min) so repeated intraday scans do not hammer the feeds.
+
+**Run it:**
+
+```bash
+# Live scan (no key needed) — GDELT + RSS
+python3 skills/market-news-analyst/scripts/gdelt_catalyst.py \
+  --ticker NVDA --keyword "Nvidia" --timespan 1d --output-dir reports/
+
+# Offline / reproducible run against saved payloads
+python3 skills/market-news-analyst/scripts/gdelt_catalyst.py \
+  --ticker NVDA --keyword "Nvidia" \
+  --gdelt-json path/to/artlist.json \
+  --gdelt-timeline-json path/to/timeline.json \
+  --rss-xml path/to/feed.xml \
+  --now 2026-07-03T15:00:00Z --output-dir reports/
+```
+
+Provide `--ticker` and/or `--keyword` (a company-name keyword is far more precise than a bare ticker in a global news index; a ticker-only query is auto-scoped to market vocabulary). Tune `--fresh-hours`, `--breaking-threshold`, `--elevated-threshold` as needed; `--no-rss` for GDELT only; `--no-fetch` for cache-only.
+
+**Two outputs (written as `reports/news_catalyst_<subject>_<ts>.{json,md}`):**
+
+1. **News-blackout risk-gate signal** — a `blackout_signal` JSON block consumed as INPUT by the **risk-gate-framework** skill (documented shape below). When `blackout` is True, a risk gate should stand new entries down for that ticker until the catalyst window clears, since price is mid-repricing on a developing story rather than trading a clean setup:
+
+   ```json
+   {
+     "schema_version": "1.0",
+     "signal": "news_blackout",
+     "ticker": "NVDA",
+     "keyword": "Nvidia",
+     "blackout": true,
+     "severity": "high",
+     "surge_x": 4.0,
+     "n_recent": 4,
+     "reason": "coverage surge 4.0x baseline at/above the 2.5x breaking threshold across 4 recent articles",
+     "recommended_action": "Suppress new entries for this ticker until the catalyst window clears ...",
+     "top_headline": "NVIDIA halts China chip shipments amid new export curbs",
+     "as_of": "2026-07-03T15:00:00Z"
+   }
+   ```
+
+   A downstream risk gate reads `blackout` (block/stand-down) and `severity` (`high` = breaking, `elevated` = tighten sizing / require confirmation, `none` = no constraint). This module never trades; it emits the signal.
+
+2. **Analyst context block** — a markdown section (headlines + surge factor + blackout status) to paste into the Market News Analyst prompt so Step 3 impact scoring starts from a quantified coverage read rather than a cold search.
+
+**How it feeds the qualitative workflow:** treat a `breaking` result as a high-priority Tier-1 event to investigate in Steps 3-5 below (confirm the actual price reaction, breadth, and forward significance). Coverage volume flags *attention*, not *direction* — the surge tells you a catalyst is live, the impact-scoring framework tells you how much it matters.
 
 ## Analysis Workflow
 
@@ -707,6 +762,15 @@ When conducting market news analysis:
 - Recommended search strategies for 10-day analysis
 - Source credibility framework
 - Red flag sources to avoid
+
+### scripts/
+
+**gdelt_catalyst.py** - Free (no API key) coverage-surge catalyst detector:
+- Queries the GDELT 2.0 DOC API for a coverage-volume timeline + latest articles, supplemented by keyword-filtered public RSS wires (Yahoo Finance, CNBC)
+- Computes `surge_x` (coverage vs baseline median), a `breaking` flag, freshness-windowed de-duplicated headlines, and TTL-cached fetches
+- Emits a `news_blackout` risk-gate signal (consumed as INPUT by risk-gate-framework) plus a markdown analyst context block, saved to `reports/`
+- Pure parse/compute functions are stdlib-only and unit-tested offline against saved fixtures (`scripts/tests/`); network fetches lazily import urllib
+- See the "Coverage-Surge Catalyst Detector" section above for usage and output shape
 
 ## Important Notes
 

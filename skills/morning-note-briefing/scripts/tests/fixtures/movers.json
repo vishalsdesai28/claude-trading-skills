@@ -1,0 +1,25 @@
+[
+  {
+    "ticker": "FGAP",
+    "name": "Fictional Gap Co",
+    "pct_change": 9.3,
+    "price": 48.10,
+    "session": "pre-market",
+    "catalyst": "upgrade to Overweight"
+  },
+  {
+    "ticker": "FDWN",
+    "name": "Fictional Downgrade Co",
+    "pct_change": -5.1,
+    "price": 22.40,
+    "session": "overnight",
+    "catalyst": "guidance cut"
+  },
+  {
+    "ticker": "FMLD",
+    "name": "Fictional Mild Co",
+    "pct_change": 1.2,
+    "price": 100.0,
+    "session": "pre-market"
+  }
+]
