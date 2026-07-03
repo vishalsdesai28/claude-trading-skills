@@ -1,0 +1,39 @@
+{
+  "quotes": [
+    {
+      "symbol": "EXMP",
+      "shortname": "Example Motors Inc.",
+      "longname": "Example Motors Incorporated",
+      "exchDisp": "NASDAQ",
+      "sector": "Consumer Cyclical",
+      "sectorDisp": "Consumer Cyclical",
+      "industry": "Auto Manufacturers",
+      "industryDisp": "Auto Manufacturers",
+      "quoteType": "EQUITY",
+      "isYahooFinance": true
+    },
+    {
+      "symbol": "SMPL",
+      "shortname": "Sample Charging Networks",
+      "longname": "Sample Charging Networks Corp.",
+      "exchDisp": "NYSE",
+      "sector": "Industrials",
+      "sectorDisp": "Industrials",
+      "industry": "Electrical Equipment & Parts",
+      "industryDisp": "Electrical Equipment & Parts",
+      "quoteType": "EQUITY",
+      "isYahooFinance": true
+    }
+  ],
+  "news": [
+    {
+      "uuid": "00000000-0000-0000-0000-000000000001",
+      "title": "Placeholder headline: EV demand outlook for FY2026",
+      "publisher": "Example Newswire",
+      "link": "https://example.com/news/ev-outlook",
+      "providerPublishTime": 1783000000,
+      "type": "STORY",
+      "relatedTickers": ["EXMP", "SMPL"]
+    }
+  ]
+}

@@ -73,6 +73,16 @@ def parse_arguments():
         default=HISTORY_DAYS,
         help=f"Days of historical data to fetch (default: {HISTORY_DAYS})",
     )
+    parser.add_argument(
+        "--with-fred",
+        action="store_true",
+        help="Anchor the regime in real FRED yield-curve/inflation prints "
+        "(needs a free FRED_API_KEY; skipped/degraded gracefully if unavailable)",
+    )
+    parser.add_argument(
+        "--fred-api-key",
+        help="FRED API key (defaults to FRED_API_KEY environment variable)",
+    )
     return parser.parse_args()
 
 
@@ -221,6 +231,23 @@ def main():
     regime = classify_regime(component_results)
     regime["consistency"] = check_regime_consistency(regime["current_regime"], component_results)
 
+    # Optional: anchor the named regime in real FRED macro prints + trends.
+    # Lazily imported and fully guarded so a missing key or FRED outage degrades
+    # to the cross-asset-only classification instead of aborting the run.
+    macro_grounding = None
+    if args.with_fred:
+        try:
+            import fred_series
+
+            macro_grounding = fred_series.build_macro_grounding(api_key=args.fred_api_key)
+            regime = fred_series.anchor_regime(regime, macro_grounding)
+            if macro_grounding.get("available"):
+                print(f"  FRED grounding: {regime['macro_grounding']['summary']}")
+            else:
+                print(f"  FRED grounding skipped: {macro_grounding.get('reason')}")
+        except Exception as exc:  # noqa: BLE001 - grounding is best-effort
+            print(f"  WARN: FRED grounding failed: {exc}", file=sys.stderr)
+
     print(f"  Composite Score: {composite['composite_score']}/100")
     print(f"  Signal Zone: {composite['zone']}")
     print(f"  Current Regime: {regime['regime_label']} (confidence: {regime['confidence']})")
@@ -247,6 +274,8 @@ def main():
         "regime": regime,
         "components": component_results,
     }
+    if macro_grounding is not None:
+        analysis["macro_grounding"] = macro_grounding
 
     os.makedirs(args.output_dir, exist_ok=True)
     timestamp = datetime.now().strftime("%Y-%m-%d_%H%M%S")

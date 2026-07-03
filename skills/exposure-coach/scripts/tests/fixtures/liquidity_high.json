@@ -1,0 +1,7 @@
+{
+  "ticker": "AAPL",
+  "dollar_volume_usd": 8500000000,
+  "spread_bps": 1.1,
+  "estimated_impact_bps": 3.0,
+  "liquidity_tier": "high"
+}

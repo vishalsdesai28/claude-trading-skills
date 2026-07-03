@@ -1,0 +1,64 @@
+{
+  "meta": {
+    "id": "PCEPILFE",
+    "title": "Personal Consumption Expenditures Excluding Food and Energy (Chain-Type Price Index)",
+    "units": "Index 2017=100",
+    "units_short": "Index 2017=100",
+    "frequency": "Monthly",
+    "seasonal_adjustment_short": "SA"
+  },
+  "observations": [
+    {
+      "date": "2025-06-01",
+      "value": "122.0"
+    },
+    {
+      "date": "2025-07-01",
+      "value": "122.283"
+    },
+    {
+      "date": "2025-08-01",
+      "value": "122.567"
+    },
+    {
+      "date": "2025-09-01",
+      "value": "122.85"
+    },
+    {
+      "date": "2025-10-01",
+      "value": "123.133"
+    },
+    {
+      "date": "2025-11-01",
+      "value": "123.417"
+    },
+    {
+      "date": "2025-12-01",
+      "value": "123.7"
+    },
+    {
+      "date": "2026-01-01",
+      "value": "123.983"
+    },
+    {
+      "date": "2026-02-01",
+      "value": "124.267"
+    },
+    {
+      "date": "2026-03-01",
+      "value": "124.55"
+    },
+    {
+      "date": "2026-04-01",
+      "value": "124.833"
+    },
+    {
+      "date": "2026-05-01",
+      "value": "125.117"
+    },
+    {
+      "date": "2026-06-01",
+      "value": "125.4"
+    }
+  ]
+}

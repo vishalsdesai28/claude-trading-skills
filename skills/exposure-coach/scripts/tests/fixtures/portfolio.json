@@ -1,0 +1,10 @@
+{
+  "equity": 100000,
+  "daily_pnl": 800,
+  "peak_daily_pnl": 900,
+  "last_trade_epoch_ms": 1751500000000,
+  "positions": [
+    {"ticker": "MSFT", "side": "long", "sector": "Technology", "notional_usd": 9000},
+    {"ticker": "XOM", "side": "long", "sector": "Energy", "notional_usd": 7000}
+  ]
+}

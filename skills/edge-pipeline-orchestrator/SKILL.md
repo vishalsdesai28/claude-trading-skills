@@ -13,6 +13,7 @@ Coordinate all edge research stages into a single automated pipeline run.
 - Resume a partially completed pipeline from the drafts stage
 - Review and revise existing strategy drafts with feedback loop
 - Dry-run the pipeline to preview results without exporting
+- Gate candidates through the cost-controlled signal funnel before any paid LLM/debate call
 
 ## Workflow
 
@@ -80,6 +81,46 @@ output-dir/
     └── metadata.json
 ```
 
+## Signal Funnel (cost-controlled pre-LLM tier)
+
+Before escalating candidates to the expensive LLM verdict / multi-agent debate stage,
+run them through the tiered signal funnel. It filters candidates with three
+cheap-to-expensive tiers so a paid model call is spent only on candidates that already
+clear a statistical bar:
+
+1. **Tier 0 — triggers.** A library of 13 pure statistical detectors over OHLCV (return
+   & volume z-score, range breakout, Bollinger squeeze, ADX, momentum burst, sustained
+   trend, volume-buildup accumulation, EMA8/21 cross, higher-lows, momentum-continuation,
+   bullish/bearish reversal candles), each scored 0-10 with a fired flag, combined into a
+   composite normalized against the sum of ALL weights (co-firing beats a lone max).
+   Zero-weight surfacing lanes surface candidates without polluting the denominator.
+2. **Tier 1 — TA filter.** A multi-timeframe (1h/4h/1d) EMA/RSI/ATR/ADX/volume additive
+   filter emitting `CONFIRMED` / `WEAK` / `REJECTED` with directional weighting (a clean
+   uptrend earns the full trend bonus, a clean downtrend half).
+3. **Tier 2 — gate.** Escalate to the LLM ONLY when the TA verdict is `CONFIRMED`, plus
+   two named bypass lanes: **burst** (`momentum_burst` fired) and **whale**
+   (`whale_signal` present).
+
+**Wiring:** run Tier 0 over all candidates, TA-filter the survivors, and hand only the
+escalated set (CONFIRMED + burst/whale bypass) to the LLM/debate tier. Dropped candidates
+cost nothing; surfaced-but-not-escalated candidates ran only the free TA filter.
+
+```bash
+# Funnel a candidate JSON (list of candidates, each with per-timeframe OHLCV)
+python3 scripts/signal_funnel.py \
+  --candidates path/to/candidates.json \
+  --output-dir reports/edge_pipeline/
+
+# Tune the gates; print JSON to stdout instead of writing files
+python3 scripts/signal_funnel.py \
+  --candidates path/to/candidates.json \
+  --min-composite 35 --confirmed-threshold 25 --stdout
+```
+
+The report `summary` reports counts per tier and `llm_call_reduction_pct`. See
+`references/signal_funnel.md` for the candidate input shape, detector list, composite
+normalization, and gate semantics.
+
 ## Claude Code LLM-Augmented Workflow
 
 Run the LLM-augmented pipeline entirely within Claude Code:
@@ -126,3 +167,5 @@ Note: `--llm-ideas-file` and `--promote-hints` are effective only during full pi
 
 - `references/pipeline_flow.md` — Pipeline stages, data contracts, and architecture
 - `references/revision_loop_rules.md` — Review-revision feedback loop rules and heuristics
+- `references/signal_funnel.md` — Tiered cost-control funnel: detectors, composite normalization, TA filter, and escalation gate
+- `scripts/signal_funnel.py` — Signal funnel script (Tier 0 triggers → Tier 1 TA filter → Tier 2 escalation gate)

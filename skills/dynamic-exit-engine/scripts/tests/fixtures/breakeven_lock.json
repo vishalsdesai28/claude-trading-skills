@@ -1,0 +1,10 @@
+{
+  "_doc": "Entry 100. Peaks at 103 (+3%) then round-trips to 100. With protect_pct=5 the trailing floor NEVER arms (current profit never reaches 5%), so without the breakeven ratchet the position would ride the 92 hard stop and simply hold. With breakeven_trigger_pct=2 and breakeven_lock_pct=0.5, the peak +3% arms the lock at 100.5, so the drop to 100 breaches the 100.5 floor and exits at a locked small gain. Used to assert the breakeven lock.",
+  "MSFT": [
+    {"date": "2026-01-02", "close": 100.0},
+    {"date": "2026-01-05", "close": 101.0},
+    {"date": "2026-01-06", "close": 103.0},
+    {"date": "2026-01-07", "close": 101.5},
+    {"date": "2026-01-08", "close": 100.0}
+  ]
+}

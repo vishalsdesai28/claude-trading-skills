@@ -3,7 +3,7 @@ layout: default
 title: "Edge Social Aggregator"
 grand_parent: 日本語
 parent: スキルガイド
-nav_order: 25
+nav_order: 28
 lang_peer: /en/skills/edge-social-aggregator/
 permalink: /ja/skills/edge-social-aggregator/
 generated: true

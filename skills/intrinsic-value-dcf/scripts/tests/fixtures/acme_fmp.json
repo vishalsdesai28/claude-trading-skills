@@ -1,0 +1,102 @@
+{
+  "_comment": "Fictional company ACME for tests. No real market data. Mature consumer-staples profile.",
+  "risk_free_rate": 0.045,
+  "profile": [
+    {
+      "symbol": "ACME",
+      "price": 100.0,
+      "beta": 0.9,
+      "mktCap": 50000000000,
+      "sector": "Consumer Defensive",
+      "industry": "Household & Personal Products",
+      "sharesOutstanding": 500000000
+    }
+  ],
+  "income": [
+    {
+      "calendarYear": "2025",
+      "revenue": 20000000000,
+      "operatingIncome": 4000000000,
+      "netIncome": 3000000000,
+      "incomeBeforeTax": 3800000000,
+      "incomeTaxExpense": 798000000,
+      "epsdiluted": 6.0,
+      "weightedAverageShsOutDil": 500000000,
+      "ebitda": 5000000000,
+      "depreciationAndAmortization": 1000000000,
+      "interestExpense": 400000000
+    },
+    {
+      "calendarYear": "2024",
+      "revenue": 18500000000,
+      "operatingIncome": 3700000000,
+      "netIncome": 2775000000,
+      "incomeBeforeTax": 3500000000,
+      "incomeTaxExpense": 735000000,
+      "epsdiluted": 5.4,
+      "weightedAverageShsOutDil": 505000000,
+      "ebitda": 4625000000,
+      "depreciationAndAmortization": 925000000,
+      "interestExpense": 380000000
+    },
+    {
+      "calendarYear": "2023",
+      "revenue": 17000000000,
+      "operatingIncome": 3349000000,
+      "netIncome": 2500000000,
+      "incomeBeforeTax": 3200000000,
+      "incomeTaxExpense": 672000000,
+      "epsdiluted": 4.9,
+      "weightedAverageShsOutDil": 510000000,
+      "ebitda": 4199000000,
+      "depreciationAndAmortization": 850000000,
+      "interestExpense": 360000000
+    }
+  ],
+  "balance": [
+    {
+      "calendarYear": "2025",
+      "totalDebt": 8000000000,
+      "cashAndShortTermInvestments": 3000000000,
+      "totalCurrentAssets": 6000000000,
+      "totalCurrentLiabilities": 3500000000,
+      "shortTermDebt": 1000000000,
+      "minorityInterest": 0,
+      "preferredStock": 0
+    }
+  ],
+  "cashflow": [
+    {
+      "calendarYear": "2025",
+      "depreciationAndAmortization": 1000000000,
+      "capitalExpenditure": -1200000000,
+      "operatingCashFlow": 3800000000,
+      "changeInWorkingCapital": -100000000
+    },
+    {
+      "calendarYear": "2024",
+      "depreciationAndAmortization": 925000000,
+      "capitalExpenditure": -1110000000,
+      "operatingCashFlow": 3500000000,
+      "changeInWorkingCapital": -90000000
+    },
+    {
+      "calendarYear": "2023",
+      "depreciationAndAmortization": 850000000,
+      "capitalExpenditure": -1020000000,
+      "operatingCashFlow": 3200000000,
+      "changeInWorkingCapital": -80000000
+    }
+  ],
+  "ratios": [
+    { "calendarYear": "2025", "effectiveTaxRate": 0.21 },
+    { "calendarYear": "2024", "effectiveTaxRate": 0.21 },
+    { "calendarYear": "2023", "effectiveTaxRate": 0.21 }
+  ],
+  "peers": [
+    { "symbol": "PEER1", "pe_fwd": 17.0, "ev_rev": 2.4, "ev_ebitda": 11.5 },
+    { "symbol": "PEER2", "pe_fwd": 19.0, "ev_rev": 2.6, "ev_ebitda": 12.5 },
+    { "symbol": "PEER3", "pe_fwd": 18.0, "ev_rev": 2.5, "ev_ebitda": 12.0 },
+    { "symbol": "PEER4", "pe_fwd": 20.0, "ev_rev": 2.7, "ev_ebitda": 13.0 }
+  ]
+}

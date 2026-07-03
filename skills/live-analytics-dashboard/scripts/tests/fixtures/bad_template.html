@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Bad Template</title>
+</head>
+<body>
+<button onclick="doThing()">Run</button>
+<a href="javascript:void(0)" onmouseover="hover()">Link</a>
+<div id="out"></div>
+<script>
+function doThing(){ eval("alert(1)"); }
+function hover(){ var f = new Function("return 2"); return f; }
+setTimeout("tick()", 500);
+</script>
+</body>
+</html>

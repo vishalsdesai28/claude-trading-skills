@@ -9,6 +9,32 @@ categories:
 - advanced-satellite
 - meta
 skills:
+- id: adversarial-trade-debate
+  display_name: Adversarial Trade Debate
+  category: trade-planning
+  status: beta
+  summary: Turn a screener candidate into a decisive conviction rating and a sized, risk-vetted trade
+    decision through two staged adversarial debates — a bull-vs-bear debate judged into a 5-tier rating,
+    then an aggressive/conservative/neutral risk debate judged by a Portfolio Manager into a final,
+    possibly-resized decision.
+  timeframe: event-driven
+  difficulty: advanced
+  integrations:
+  - id: local_calculation
+    type: calculation
+    requirement: not_required
+    note: LLM orchestration, no paid data; consumes intrinsic-value-dcf / technical-analyst / retail-sentiment-ingestor
+      (optional market-news-analyst, trader-memory-core) outputs and hands off to position-sizer; debate_kit.py
+      assemble / parse-decision run locally (stdlib)
+  inputs:
+  - candidate_ticker
+  - valuation_report
+  - technical_report
+  - sentiment_report
+  outputs:
+  - conviction_rating
+  - trade_decision
+  workflows: []
 - id: backtest-expert
   display_name: Backtest Expert
   category: strategy-research
@@ -101,12 +127,45 @@ skills:
   - id: local_calculation
     type: calculation
     requirement: not_required
-    note: Local markdown validation; works offline
+    note: Local markdown validation; the five core checks and the snapshot cross-check itself run offline
+  - id: yfinance
+    type: market_data
+    requirement: optional
+    note: Keyless OHLCV (default source) for the market_snapshot.py verified-snapshot guardrail
+  - id: fmp
+    type: market_data
+    requirement: optional
+    note: Alternative OHLCV source for market_snapshot.py (FMP_API_KEY or --api-key)
   inputs:
   - markdown_document
   outputs:
   - quality_report
   - issue_list
+  workflows: []
+- id: dealer-gamma-analyzer
+  display_name: Dealer Gamma Analyzer
+  category: advanced-satellite
+  status: beta
+  summary: Quantify dealer options gamma (GEX) positioning for an equity or index from free CBOE ~15-minute-delayed
+    options data — signed dealer gamma per strike, total GEX under two dealer conventions, call/put walls
+    as S/R levels, gamma-flip strike, max pain, and positive/negative-gamma regime classification. No paid
+    feed required.
+  timeframe: daily
+  difficulty: advanced
+  integrations:
+  - id: cboe
+    type: web
+    requirement: required
+    note: Free ~15-min delayed CBOE options JSON (per-contract gamma/delta/IV/OI); no API key
+  - id: local_calculation
+    type: calculation
+    requirement: not_required
+    note: GEX / walls / gamma-flip / max-pain computed locally (stdlib only)
+  inputs:
+  - underlying_ticker
+  outputs:
+  - gamma_exposure_report
+  - gamma_levels
   workflows: []
 - id: dividend-growth-pullback-screener
   display_name: Dividend Growth Pullback Screener
@@ -170,6 +229,33 @@ skills:
   - dual_axis_score_report
   workflows:
   - monthly-performance-review
+- id: dynamic-exit-engine
+  display_name: Dynamic Exit Engine
+  category: trade-planning
+  status: beta
+  summary: Manage an adaptive trailing exit for an open long equity position via a two-phase trailing-stop
+    FSM (hard stop -> ratcheting profit floor) with breakeven lock, stale-flat timeout, ATR noise band, and
+    consecutive-breach confirmation. Replays deterministically over an OHLCV price series and persists a
+    JSON tracker snapshot.
+  timeframe: daily
+  difficulty: intermediate
+  integrations:
+  - id: fmp
+    type: market_data
+    requirement: optional
+    note: Daily OHLCV pull via FMP; or a local OHLCV fixture (Alpaca/Robinhood/FMP export) via --bars-source
+      fixture (keyless)
+  - id: local_calculation
+    type: calculation
+    requirement: not_required
+    note: Trailing-stop FSM is a deterministic fold over the bar series
+  inputs:
+  - open_position
+  - ohlcv_series
+  outputs:
+  - exit_action
+  - exit_tracker_snapshot
+  workflows: []
 - id: earnings-calendar
   display_name: Earnings Calendar
   category: meta
@@ -202,6 +288,11 @@ skills:
     type: market_data
     requirement: required
     note: Financial Modeling Prep API
+  - id: yfinance
+    type: market_data
+    requirement: optional
+    note: Keyless analyst estimate-revision factor (earnings/revenue estimates, EPS trend/revisions) via
+      --with-estimate-revision
   inputs:
   - recent_earnings_universe
   outputs:
@@ -415,6 +506,11 @@ skills:
     type: screener
     requirement: optional
     note: FINVIZ Elite API
+  - id: yfinance
+    type: market_data
+    requirement: optional
+    note: Keyless yfinance multi-factor boolean screener (nested AND/OR screens, predefined screens,
+      ticker/news search) alongside the FinViz URL builder
   inputs:
   - natural_language_query
   outputs:
@@ -479,6 +575,36 @@ skills:
   outputs:
   - flow_analysis_report
   workflows: []
+- id: intrinsic-value-dcf
+  display_name: Intrinsic Value (DCF)
+  category: advanced-satellite
+  status: beta
+  summary: Produce a triangulated intrinsic-value estimate for a US ticker by blending a discounted-cash-flow
+    model (CAPM WACC, 5-year FCFF fade, dual terminal value, recalculated WACC x terminal-growth sensitivity
+    grid), peer-median relative multiples, and an optional sum-of-the-parts, with Bull/Base/Bear scenarios,
+    guardrail gates, and sector-aware method routing.
+  timeframe: research
+  difficulty: advanced
+  integrations:
+  - id: fmp
+    type: market_data
+    requirement: required
+    note: US fundamentals + live 10Y UST risk-free rate via FMP (primary data path)
+  - id: yfinance
+    type: market_data
+    requirement: optional
+    note: Keyless fallback (--yfinance); or a pre-fetched FMP-shaped JSON (--input-json) for offline runs
+  - id: local_calculation
+    type: calculation
+    requirement: not_required
+    note: DCF / relative / SOTP engine runs on the standard library
+  inputs:
+  - ticker
+  - financial_statements
+  outputs:
+  - intrinsic_value_report
+  - sensitivity_grid
+  workflows: []
 - id: kanchi-dividend-review-monitor
   display_name: Kanchi Dividend Review Monitor
   category: core-portfolio
@@ -538,6 +664,27 @@ skills:
   - account_location_advice
   workflows:
   - core-portfolio-weekly
+- id: live-analytics-dashboard
+  display_name: Live Analytics Dashboard
+  category: meta
+  status: beta
+  summary: Render another skill's reports/*.json (watchlist, breadth, or portfolio monitors) as a dashboard —
+    detect the report shape, build a KPI + sortable-table view, and either publish it as a snapshot Artifact
+    or serve it as a live-refreshing local page. Every generated page is CSP-safety gated before serving.
+  timeframe: daily
+  difficulty: intermediate
+  integrations:
+  - id: local_calculation
+    type: calculation
+    requirement: not_required
+    note: Local serving (static HTML snapshot or local FastAPI + polling on port 8770), no paid data and
+      no network; consumes another skill's documented reports/*.json output shape (watchlist / breadth /
+      portfolio / generic); Artifact-tool-first for snapshots
+  inputs:
+  - report_json
+  outputs:
+  - dashboard_page
+  workflows: []
 - id: macro-regime-detector
   display_name: Macro Regime Detector
   category: market-regime
@@ -550,6 +697,11 @@ skills:
     type: market_data
     requirement: recommended
     note: Cross-asset ratio data via yfinance or local CSV
+  - id: fred
+    type: market_data
+    requirement: optional
+    note: Free FRED API, free key required (FRED_API_KEY / --api-key); --with-fred anchors the regime in
+      real yield-curve/inflation prints via fred_series.py; degrades gracefully when absent
   inputs:
   - cross_asset_ratios
   - yield_curve_data
@@ -611,6 +763,11 @@ skills:
     type: web
     requirement: required
     note: Web search / fetch
+  - id: gdelt
+    type: web
+    requirement: optional
+    note: Free GDELT 2.0 + public RSS coverage-surge catalyst detector (no API key); emits a news_blackout
+      risk-gate signal via scripts/gdelt_catalyst.py
   inputs:
   - news_search_query
   - date_range
@@ -636,6 +793,32 @@ skills:
   - market_top_composite_score
   workflows:
   - market-regime-daily
+- id: morning-note-briefing
+  display_name: Morning Note Briefing
+  category: market-regime
+  status: beta
+  summary: Assemble a fixed-format, two-minute pre-market morning note by composing the JSON outputs of
+    existing skills — overnight earnings (earnings-calendar), pre-market movers and sector performance
+    (sector-analyst plus a price feed), today's macro calendar (economic-calendar-fetcher), and live
+    catalysts (market-news-analyst / gdelt-news-catalyst) — leading with the single most important
+    development, a directional Top Call, and actionable long/short ideas.
+  timeframe: daily
+  difficulty: intermediate
+  integrations:
+  - id: local_calculation
+    type: calculation
+    requirement: not_required
+    note: Composition of existing skills (earnings-calendar, sector-analyst, economic-calendar-fetcher,
+      market-news-analyst / gdelt-news-catalyst, plus a generic movers price feed); consumes their documented
+      JSON outputs as input files; pure offline assembler (FMP only indirectly via the sub-skills)
+  inputs:
+  - earnings_json
+  - movers_json
+  - economic_calendar_json
+  - news_events_json
+  outputs:
+  - morning_note
+  workflows: []
 - id: options-strategy-advisor
   display_name: Options Strategy Advisor
   category: advanced-satellite
@@ -751,7 +934,16 @@ skills:
   - id: local_calculation
     type: calculation
     requirement: not_required
-    note: Pure calculation; works offline
+    note: Risk-based sizing and the slippage gate that feeds it are pure-calc offline
+  - id: yfinance
+    type: market_data
+    requirement: optional
+    note: Keyless OHLCV for the pre-trade liquidity/slippage check (bid-ask spread, dollar volume, turnover,
+      Amihud, square-root market-impact) via liquidity_check.py
+  - id: fmp
+    type: market_data
+    requirement: optional
+    note: Alternative daily-history source for the liquidity_check.py pre-trade check (FMP_API_KEY)
   inputs:
   - entry_price
   - stop_price
@@ -761,6 +953,39 @@ skills:
   - risk_amount
   workflows:
   - swing-opportunity-daily
+- id: retail-sentiment-ingestor
+  display_name: Retail Sentiment Ingestor
+  category: strategy-research
+  status: beta
+  summary: Ingest real-time retail sentiment for a list of tickers from keyless StockTwits cashtag streams
+    and Reddit (r/wallstreetbets, r/stocks, r/investing), plus an optional X path, and emit one
+    deterministically-scored signal note per ticker into the shared social vault with sentiment band, 0-10
+    score, cross-source divergence, and a >=90/10 StockTwits over-extension flag.
+  timeframe: daily
+  difficulty: intermediate
+  integrations:
+  - id: stocktwits
+    type: web
+    requirement: required
+    note: Keyless StockTwits cashtag streams (user-applied Bullish/Bearish labels)
+  - id: reddit
+    type: web
+    requirement: required
+    note: Keyless Reddit (r/wallstreetbets, r/stocks, r/investing) posts
+  - id: x
+    type: web
+    requirement: optional
+    note: Optional X sweep via X_API_KEY / --x-api-key (paid full-archive tier for event-window search)
+  - id: local_calculation
+    type: calculation
+    requirement: not_required
+    note: Deterministic scoring + vault write run locally (no LLM extraction step)
+  inputs:
+  - ticker_list
+  outputs:
+  - social_signal_notes
+  - social_signal_index
+  workflows: []
 - id: robinhood-trade-executor
   display_name: Robinhood Trade Executor
   category: trade-planning
@@ -799,6 +1024,10 @@ skills:
     type: web
     requirement: required
     note: Headline / news search via WebSearch
+  - id: polymarket
+    type: web
+    requirement: optional
+    note: Optional forward base rates via the free keyless Polymarket Gamma API (scripts/polymarket_odds.py)
   inputs:
   - news_headline
   outputs:
@@ -823,6 +1052,33 @@ skills:
   - chart_image
   outputs:
   - rotation_assessment_report
+  workflows: []
+- id: short-squeeze-radar
+  display_name: Short-Squeeze Radar
+  category: advanced-satellite
+  status: beta
+  summary: Rank US equities by short-squeeze potential from free FINRA data — Reg SHO daily short-volume
+    files (rising short-volume-ratio inflection) plus optional bi-monthly short interest for days-to-cover
+    ranking — classifying each name as crowded-short / neutral / low-pressure. No API key required.
+  timeframe: daily
+  difficulty: intermediate
+  integrations:
+  - id: finra
+    type: web
+    requirement: required
+    note: Free FINRA Reg SHO daily short-sale volume files (no auth)
+  - id: short_interest_file
+    type: local_file
+    requirement: optional
+    note: Optional bi-monthly short-interest CSV/JSON (FINRA/NASDAQ/broker) for days-to-cover ranking
+  - id: local_calculation
+    type: calculation
+    requirement: not_required
+    note: Ranking / inflection detection / classification run locally (stdlib only)
+  inputs:
+  - watchlist_tickers
+  outputs:
+  - squeeze_ranking_report
   workflows: []
 - id: signal-postmortem
   display_name: Signal Postmortem
@@ -1262,7 +1518,7 @@ skills:
   - id: fmp
     type: market_data
     requirement: optional
-    note: Financial Modeling Prep API
+    note: FMP optional for MAE/MFE and the alpha benchmark (SPY); reflection log and past-context are offline
   inputs:
   - screener_report
   - trade_actions

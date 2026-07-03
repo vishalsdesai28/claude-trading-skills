@@ -1,0 +1,9 @@
+{
+  "schema_version": "1.0",
+  "generated_at": "2026-07-03T07:00:00Z",
+  "exposure_ceiling_pct": 15,
+  "bias": "DEFENSIVE",
+  "participation": "NARROW",
+  "recommendation": "CASH_PRIORITY",
+  "confidence": "MEDIUM"
+}

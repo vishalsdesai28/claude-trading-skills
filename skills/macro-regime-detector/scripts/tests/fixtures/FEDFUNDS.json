@@ -1,0 +1,64 @@
+{
+  "meta": {
+    "id": "FEDFUNDS",
+    "title": "Federal Funds Effective Rate",
+    "units": "Percent",
+    "units_short": "%",
+    "frequency": "Monthly",
+    "seasonal_adjustment_short": "NSA"
+  },
+  "observations": [
+    {
+      "date": "2025-06-01",
+      "value": "5.33"
+    },
+    {
+      "date": "2025-07-01",
+      "value": "5.25"
+    },
+    {
+      "date": "2025-08-01",
+      "value": "5.16"
+    },
+    {
+      "date": "2025-09-01",
+      "value": "5.08"
+    },
+    {
+      "date": "2025-10-01",
+      "value": "5.0"
+    },
+    {
+      "date": "2025-11-01",
+      "value": "4.91"
+    },
+    {
+      "date": "2025-12-01",
+      "value": "4.83"
+    },
+    {
+      "date": "2026-01-01",
+      "value": "4.75"
+    },
+    {
+      "date": "2026-02-01",
+      "value": "4.66"
+    },
+    {
+      "date": "2026-03-01",
+      "value": "4.58"
+    },
+    {
+      "date": "2026-04-01",
+      "value": "4.5"
+    },
+    {
+      "date": "2026-05-01",
+      "value": "4.41"
+    },
+    {
+      "date": "2026-06-01",
+      "value": "4.33"
+    }
+  ]
+}

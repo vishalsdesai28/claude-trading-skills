@@ -1,0 +1,24 @@
+{
+  "schema_version": "1.0",
+  "generated": "2026-07-03 00:00:00",
+  "order": {
+    "shares": null,
+    "dollars": null
+  },
+  "tickers": [
+    {
+      "ticker": "TESTCO",
+      "avg_daily_volume": 100000,
+      "daily_volatility": 0.03,
+      "liquidity_grade": "low",
+      "estimated_slippage_bps": null
+    },
+    {
+      "ticker": "OTHER",
+      "avg_daily_volume": 5000000,
+      "daily_volatility": 0.015,
+      "liquidity_grade": "high",
+      "estimated_slippage_bps": null
+    }
+  ]
+}

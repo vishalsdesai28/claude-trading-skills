@@ -84,6 +84,64 @@ Map the posture recommendation to portfolio actions:
 | REDUCE_ONLY | No new entries; trim existing positions on strength |
 | CASH_PRIORITY | Raise cash aggressively; avoid all new commitments |
 
+### Step 5: Gate Individual Candidates Before Execution (Optional)
+
+The posture summary sets the *ceiling*; it does not clear a specific trade. Once
+a candidate ticker has been chosen, hand it through the composable risk gates in
+`scripts/risk_gates.py` before the order reaches execution. Each gate is an
+independent pure function returning `{pass, reason}`; **all** gates are evaluated
+(no short-circuit) so every blocking reason is captured for telemetry, then a
+single decision object reports pass/fail per gate.
+
+Gates enforced (each independently configurable, snake_case or camelCase keys accepted):
+
+| Gate | Purpose |
+|------|---------|
+| confidence | Minimum conviction; regime-aware — a **lower** bar for trend-aligned trades |
+| max_concurrent | Cap on simultaneously open positions |
+| notional_cap | Per-trade dollar ceiling (absolute or % of equity) |
+| daily_loss | Daily-loss kill switch (halts once P&L breaches a negative limit) |
+| daily_giveback | Give-back halt — locks in a green day once it retraces from its peak |
+| liquidity | Dollar-volume floor for longs (from liquidity-execution-cost) |
+| short_liquidity | **Separate, deeper** dollar-volume floor for shorts (squeeze risk) |
+| correlation | Cap on same-sector, same-direction exposure |
+| cooldown | Minimum wait between trades |
+| opposite_guard | Blocks flip / pyramid on a ticker already held |
+| news | Binary-news blackout (from gdelt-news-catalyst) |
+
+The gates **consume two sibling skills' documented JSON output**:
+
+- `liquidity-execution-cost` supplies average dollar volume for the liquidity floors.
+  Accepted keys (first present wins): `dollar_volume_usd`, `avg_dollar_volume_usd`,
+  `adv_usd`, `dollar_volume`, or the same nested under a `liquidity` object. When no
+  liquidity JSON is supplied, the floors are **not** enforced (a missing upstream
+  signal must not silently block every trade).
+- `gdelt-news-catalyst` supplies the blackout flag. Accepted keys: `blackout`,
+  `has_blackout`, `binary_news_risk`, `blackout_active`; otherwise a `severity` of
+  `high`/`critical` is treated as a blackout. `headline`/`catalyst`/`catalyst_type`
+  becomes the block reason.
+
+Trend alignment is derived from this skill's own posture recommendation: a **long**
+is aligned when the recommendation is `NEW_ENTRY_ALLOWED`; a **short** is aligned
+when it is `REDUCE_ONLY` or `CASH_PRIORITY`. Aligned candidates get the lower
+`aligned_min_confidence` bar.
+
+```bash
+python3 skills/exposure-coach/scripts/risk_gates.py \
+  --candidate reports/candidate_AAPL.json \
+  --posture reports/exposure_posture_latest.json \
+  --portfolio reports/account_state.json \
+  --liquidity reports/liquidity_AAPL.json \
+  --news reports/gdelt_AAPL.json \
+  --config reports/risk_gate_config.json \
+  --output-dir reports/
+```
+
+A candidate is `approved` only when every gate passes. The JSON decision lists
+`results` (per-gate `{pass, reason}`), `passed_gates`, `failed_gates`, and the
+aggregated `block_reasons`. Reports are saved as
+`risk_gate_decision_<TICKER>_YYYY-MM-DD_HHMMSS.{json,md}`.
+
 ## Output Format
 
 ### JSON Report
@@ -145,6 +203,7 @@ Reports are saved to `reports/` with filenames `exposure_posture_YYYY-MM-DD_HHMM
 ## Resources
 
 - `scripts/calculate_exposure.py` -- Main orchestrator that scores and synthesizes inputs
+- `scripts/risk_gates.py` -- Composable pre-execution risk gates (confidence, notional, daily-loss/give-back, liquidity floors, correlation, cooldown, pyramid guard, news blackout); consumes liquidity-execution-cost + gdelt-news-catalyst output
 - `references/exposure_framework.md` -- Scoring rules and threshold definitions
 - `references/regime_exposure_map.md` -- Regime-to-exposure ceiling mappings
 

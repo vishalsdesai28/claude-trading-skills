@@ -1,0 +1,64 @@
+{
+  "events": [
+    {
+      "title": "Fed decisions in 2026",
+      "markets": [
+        {
+          "question": "Will the Fed cut rates in 2026?",
+          "outcomes": "[\"Yes\", \"No\"]",
+          "outcomePrices": "[\"0.76\", \"0.24\"]",
+          "volumeNum": 5200000,
+          "endDate": "2030-12-31T00:00:00Z",
+          "closed": false,
+          "active": true,
+          "oneWeekPriceChange": -0.045
+        },
+        {
+          "question": "Did the Fed hike in Jan 2020? (resolved)",
+          "outcomes": "[\"Yes\", \"No\"]",
+          "outcomePrices": "[\"1.0\", \"0.0\"]",
+          "volumeNum": 9000000,
+          "endDate": "2030-12-31T00:00:00Z",
+          "closed": true,
+          "active": false,
+          "oneWeekPriceChange": null
+        },
+        {
+          "question": "Past-dated recession call?",
+          "outcomes": "[\"Yes\", \"No\"]",
+          "outcomePrices": "[\"0.5\", \"0.5\"]",
+          "volumeNum": 8000000,
+          "endDate": "2019-06-30T00:00:00Z",
+          "closed": false,
+          "active": true,
+          "oneWeekPriceChange": 0.01
+        },
+        {
+          "question": "Will there be an emergency 50bp cut?",
+          "outcomes": "[\"Yes\", \"No\"]",
+          "outcomePrices": "[\"0.08\", \"0.92\"]",
+          "volumeNum": 1500,
+          "endDate": "2030-06-30T00:00:00Z",
+          "closed": false,
+          "active": true,
+          "oneWeekPriceChange": null
+        }
+      ]
+    },
+    {
+      "title": "Number of cuts",
+      "markets": [
+        {
+          "question": "How many Fed cuts in 2026?",
+          "outcomes": "[\"0\", \"1\", \"2\", \"3+\"]",
+          "outcomePrices": "[\"0.10\", \"0.30\", \"0.40\", \"0.20\"]",
+          "volumeNum": 3000000,
+          "endDate": "2030-12-31T00:00:00Z",
+          "closed": false,
+          "active": true,
+          "oneWeekPriceChange": 0.02
+        }
+      ]
+    }
+  ]
+}

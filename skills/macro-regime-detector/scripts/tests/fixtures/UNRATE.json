@@ -1,0 +1,64 @@
+{
+  "meta": {
+    "id": "UNRATE",
+    "title": "Unemployment Rate",
+    "units": "Percent",
+    "units_short": "%",
+    "frequency": "Monthly",
+    "seasonal_adjustment_short": "SA"
+  },
+  "observations": [
+    {
+      "date": "2025-06-01",
+      "value": "3.9"
+    },
+    {
+      "date": "2025-07-01",
+      "value": "3.9"
+    },
+    {
+      "date": "2025-08-01",
+      "value": "4.0"
+    },
+    {
+      "date": "2025-09-01",
+      "value": "4.0"
+    },
+    {
+      "date": "2025-10-01",
+      "value": "4.0"
+    },
+    {
+      "date": "2025-11-01",
+      "value": "4.0"
+    },
+    {
+      "date": "2025-12-01",
+      "value": "4.0"
+    },
+    {
+      "date": "2026-01-01",
+      "value": "4.1"
+    },
+    {
+      "date": "2026-02-01",
+      "value": "4.1"
+    },
+    {
+      "date": "2026-03-01",
+      "value": "4.1"
+    },
+    {
+      "date": "2026-04-01",
+      "value": "4.2"
+    },
+    {
+      "date": "2026-05-01",
+      "value": "4.2"
+    },
+    {
+      "date": "2026-06-01",
+      "value": "4.2"
+    }
+  ]
+}

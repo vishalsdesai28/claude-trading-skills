@@ -1,11 +1,11 @@
 ---
 name: earnings-trade-analyzer
-description: Analyze recent post-earnings stocks using a 5-factor scoring system (Gap Size, Pre-Earnings Trend, Volume Trend, MA200 Position, MA50 Position). Scores each stock 0-100 and assigns A/B/C/D grades. Use when user asks about earnings trade analysis, post-earnings momentum screening, earnings gap scoring, or finding best recent earnings reactions.
+description: Analyze recent post-earnings stocks using a 5-factor scoring system (Gap Size, Pre-Earnings Trend, Volume Trend, MA200 Position, MA50 Position), optionally extended to a 6th analyst Estimate-Revision Momentum factor. Scores each stock 0-100 and assigns A/B/C/D grades. Use when user asks about earnings trade analysis, post-earnings momentum screening, earnings gap scoring, analyst estimate-revision momentum, or finding best recent earnings reactions.
 ---
 
-# Earnings Trade Analyzer - Post-Earnings 5-Factor Scoring
+# Earnings Trade Analyzer - Post-Earnings 5/6-Factor Scoring
 
-Analyze recent post-earnings stocks using a 5-factor weighted scoring system to identify the strongest earnings reactions for potential momentum trades.
+Analyze recent post-earnings stocks using a weighted scoring system to identify the strongest earnings reactions for potential momentum trades. The default run scores 5 price/volume factors; an optional 6th factor (analyst estimate-revision momentum, keyless via Yahoo Finance) penalizes candidates that are being quietly downgraded by analysts even when their price action looks strong.
 
 ## When to Use
 
@@ -13,6 +13,7 @@ Analyze recent post-earnings stocks using a 5-factor weighted scoring system to 
 - User wants to find the best recent earnings reactions
 - User requests earnings momentum scoring or grading
 - User asks about post-earnings accumulation day (PEAD) candidates
+- User wants analyst estimate-revision momentum factored into the ranking (add `--with-estimate-revision`)
 
 ## Prerequisites
 
@@ -41,6 +42,29 @@ python3 skills/earnings-trade-analyzer/scripts/analyze_earnings_trades.py \
 python3 skills/earnings-trade-analyzer/scripts/analyze_earnings_trades.py \
   --apply-entry-filter \
   --output-dir reports/
+
+# With the 6th analyst estimate-revision factor (keyless via yfinance, no FMP budget impact)
+python3 skills/earnings-trade-analyzer/scripts/analyze_earnings_trades.py \
+  --with-estimate-revision \
+  --output-dir reports/
+```
+
+#### Optional 6th factor: analyst estimate-revision momentum
+
+Passing `--with-estimate-revision` adds a 6th scoring input (15% weight; the other five factors are reduced pro-rata so weights still sum to 1.0). For each scored candidate it pulls analyst estimate data from Yahoo Finance (keyless, via yfinance — no FMP API calls) and computes a signed revision-momentum score (0-100, 50 = neutral) from:
+
+- current EPS/revenue consensus with high/low spread per period
+- EPS-trend drift over 7/30/60/90 days (near-term period preferred)
+- up-vs-down revision breadth counts (7d/30d)
+- a historical estimate-vs-actual calibration score used as a confidence weight
+
+Candidates being quietly downgraded (falling estimates, more down- than up-revisions) score below 50 and are penalized in the composite; stocks with no analyst coverage get a neutral 50 and are not penalized. If yfinance or the data is unavailable for a symbol, that candidate is scored on the 5 price/volume factors only and the run continues.
+
+The factor can also be run standalone for a single ticker:
+
+```bash
+python3 skills/earnings-trade-analyzer/scripts/estimate_revision.py \
+  --ticker AAPL --output-dir reports/
 ```
 
 #### Degraded endpoint / budget fallback for scheduled reviews
@@ -82,6 +106,7 @@ For each top candidate, present:
 - Pre-earnings 20-day trend
 - Volume ratio (20-day vs 60-day average)
 - Position relative to 200-day and 50-day moving averages
+- (if `--with-estimate-revision`) analyst estimate-revision score/label (upgrade/neutral/downgrade) and confidence weight
 - Weakest and strongest scoring components
 
 ### Step 4: Provide Actionable Guidance
@@ -94,9 +119,10 @@ Based on grades:
 
 ## Output
 
-- `earnings_trade_analyzer_YYYY-MM-DD_HHMMSS.json` - Structured results with schema_version "1.0"
+- `earnings_trade_analyzer_YYYY-MM-DD_HHMMSS.json` - Structured results with schema_version "1.0" (each result's `components.estimate_revision` is populated when `--with-estimate-revision` is used)
 - `earnings_trade_analyzer_YYYY-MM-DD_HHMMSS.md` - Human-readable report with tables
+- (standalone `estimate_revision.py`) `estimate_revision_<TICKER>_YYYY-MM-DD_HHMMSS.json` / `.md` - single-ticker estimate-revision breakdown
 
 ## Resources
 
-- `references/scoring_methodology.md` - 5-factor scoring system, grade thresholds, and entry quality filter rules
+- `references/scoring_methodology.md` - 5/6-factor scoring system, grade thresholds, estimate-revision factor, and entry quality filter rules

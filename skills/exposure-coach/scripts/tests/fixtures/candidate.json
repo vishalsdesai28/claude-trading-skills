@@ -1,0 +1,7 @@
+{
+  "ticker": "AAPL",
+  "side": "long",
+  "confidence": 0.82,
+  "trade_notional_usd": 8000,
+  "sector": "Technology"
+}

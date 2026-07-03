@@ -1,0 +1,5 @@
+Date|Symbol|ShortVolume|ShortExemptVolume|TotalVolume|Market
+20260702|GME|560000|0|1000000|B,Q,N
+20260702|AMC|320000|0|1000000|B,Q,N
+20260702|AAPL|450000|0|1000000|B,Q,N
+Records: 3

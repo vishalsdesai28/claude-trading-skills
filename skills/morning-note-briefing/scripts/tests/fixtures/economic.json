@@ -1,0 +1,32 @@
+[
+  {
+    "date": "2026-07-03 08:30:00",
+    "country": "US",
+    "event": "Nonfarm Payrolls",
+    "currency": "USD",
+    "impact": "High",
+    "previous": 175000,
+    "estimate": 190000,
+    "actual": 250000
+  },
+  {
+    "date": "2026-07-03 10:00:00",
+    "country": "US",
+    "event": "ISM Services PMI",
+    "currency": "USD",
+    "impact": "Medium",
+    "previous": 51.2,
+    "estimate": 52.0,
+    "actual": null
+  },
+  {
+    "date": "2026-07-04 09:00:00",
+    "country": "DE",
+    "event": "German Factory Orders",
+    "currency": "EUR",
+    "impact": "Low",
+    "previous": 0.3,
+    "estimate": 0.5,
+    "actual": null
+  }
+]

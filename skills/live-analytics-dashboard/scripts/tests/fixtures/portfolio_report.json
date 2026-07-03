@@ -1,0 +1,10 @@
+{
+  "generated_at": "2026-07-03T16:00:00Z",
+  "account_equity": 250000.0,
+  "cash": 42000.0,
+  "day_pnl_pct": 0.83,
+  "positions": [
+    {"ticker": "ACME", "shares": 120, "avg_cost": 110.0, "price": 142.10, "market_value": 17052.0, "weight_pct": 6.8, "unrealized_pnl_pct": 29.2},
+    {"ticker": "UMBRELLA", "shares": 50, "avg_cost": 88.0, "price": 81.25, "market_value": 4062.5, "weight_pct": 1.6, "unrealized_pnl_pct": -7.7}
+  ]
+}

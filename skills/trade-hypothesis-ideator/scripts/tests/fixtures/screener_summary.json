@@ -1,0 +1,6 @@
+{
+  "mode": "boolean",
+  "result_count": 3,
+  "total_matches": 42,
+  "symbols": ["FAKE1", "FAKE2", "", "FAKE3", 123]
+}

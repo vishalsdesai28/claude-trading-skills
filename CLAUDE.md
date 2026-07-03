@@ -219,14 +219,17 @@ The table below is **auto-generated** from `skills-index.yaml` by `scripts/gener
 
 | Skill | FMP API | FINVIZ Elite | Alpaca | Notes |
 |-------|---------|--------------|--------|-------|
+| **Adversarial Trade Debate** | ❌ Not used | ❌ Not used | ❌ Not used | LLM orchestration, no paid data; consumes intrinsic-value-dcf / technical-analyst / retail-sentiment-ingestor (optional market-news-analyst, trader-memory-core) outputs and hands off to position-sizer; debate_kit.py assemble / parse-decision run locally (stdlib) |
 | **Backtest Expert** | ❌ Not used | ❌ Not used | ❌ Not used | User provides strategy parameters |
 | **Breadth Chart Analyst** | ❌ Not used | ❌ Not used | ❌ Not used | Chart screenshot input |
 | **Breakout Trade Planner** | ❌ Not used | ❌ Not used | ❌ Not used | Consumes VCP screener output; pure calculation + Alpaca order templates |
 | **CANSLIM Screener** | ✅ Required | ❌ Not used | ❌ Not used | US stock fundamentals via FMP |
-| **Data Quality Checker** | ❌ Not used | ❌ Not used | ❌ Not used | Local markdown validation; works offline |
+| **Data Quality Checker** | 🟡 Optional | ❌ Not used | ❌ Not used | Alternative OHLCV source for market_snapshot.py (FMP_API_KEY or --api-key) |
+| **Dealer Gamma Analyzer** | ❌ Not used | ❌ Not used | ❌ Not used | Free ~15-min delayed CBOE options JSON (per-contract gamma/delta/IV/OI); no API key; GEX / walls / gamma-flip / max-pain computed locally (stdlib only) |
 | **Dividend Growth Pullback Screener** | ✅ Required | 🟡 Optional (Recommended) | ❌ Not used | Financial Modeling Prep API |
 | **Downtrend Duration Analyzer** | ❌ Not used | ❌ Not used | ❌ Not used | Duration analysis from market data; pure calculation |
 | **Dual Axis Skill Reviewer** | ❌ Not used | ❌ Not used | ❌ Not used | Deterministic scoring + optional LLM review |
+| **Dynamic Exit Engine** | 🟡 Optional | ❌ Not used | ❌ Not used | Daily OHLCV pull via FMP; or a local OHLCV fixture (Alpaca/Robinhood/FMP export) via --bars-source fixture (keyless) |
 | **Earnings Calendar** | ✅ Required | ❌ Not used | ❌ Not used | Financial Modeling Prep API |
 | **Earnings Trade Analyzer** | ✅ Required | ❌ Not used | ❌ Not used | Financial Modeling Prep API |
 | **Economic Calendar Fetcher** | ✅ Required | ❌ Not used | ❌ Not used | Financial Modeling Prep API |
@@ -243,23 +246,28 @@ The table below is **auto-generated** from `skills-index.yaml` by `scripts/gener
 | **Finviz Screener** | ❌ Not used | 🟡 Optional | ❌ Not used | FINVIZ Elite API |
 | **IBD Distribution Day Monitor** | ✅ Required | ❌ Not used | ❌ Not used | Financial Modeling Prep API |
 | **Institutional Flow Tracker** | ✅ Required | ❌ Not used | ❌ Not used | Financial Modeling Prep API |
+| **Intrinsic Value (DCF)** | ✅ Required | ❌ Not used | ❌ Not used | US fundamentals + live 10Y UST risk-free rate via FMP (primary data path) |
 | **Kanchi Dividend Review Monitor** | 🟡 Optional (Recommended) | ❌ Not used | ❌ Not used | Dividend / price monitoring via FMP |
 | **Kanchi Dividend SOP** | 🟡 Optional (Recommended) | ❌ Not used | ❌ Not used | US dividend stock data via FMP |
 | **Kanchi Dividend US Tax Accounting** | ❌ Not used | ❌ Not used | ❌ Not used | US tax workflow guidance; pure calculation |
-| **Macro Regime Detector** | ❌ Not used | ❌ Not used | ❌ Not used | Cross-asset ratio data via yfinance or local CSV |
+| **Live Analytics Dashboard** | ❌ Not used | ❌ Not used | ❌ Not used | Local serving (static HTML snapshot or local FastAPI + polling on port 8770), no paid data and no network; consumes another skill's documented reports/*.json output shape (watchlist / breadth / portfolio / generic); Artifact-tool-first for snapshots |
+| **Macro Regime Detector** | ❌ Not used | ❌ Not used | ❌ Not used | Cross-asset ratio data via yfinance or local CSV; Free FRED API, free key required (FRED_API_KEY / --api-key); --with-fred anchors the regime in real yield-curve/inflation prints via fred_series.py; degrades gracefully when absent |
 | **Market Breadth Analyzer** | ❌ Not used | ❌ Not used | ❌ Not used | TraderMonty public CSV; no API key required |
 | **Market Environment Analysis** | ❌ Not used | ❌ Not used | ❌ Not used | Global market data via WebSearch / WebFetch; Optional chart image inputs for technical interpretation |
-| **Market News Analyst** | ❌ Not used | ❌ Not used | ❌ Not used | Web search / fetch |
+| **Market News Analyst** | ❌ Not used | ❌ Not used | ❌ Not used | Web search / fetch; Free GDELT 2.0 + public RSS coverage-surge catalyst detector (no API key); emits a news_blackout risk-gate signal via scripts/gdelt_catalyst.py |
 | **Market Top Detector** | ❌ Not used | ❌ Not used | ❌ Not used | Public market data CSVs; no API key required |
+| **Morning Note Briefing** | ❌ Not used | ❌ Not used | ❌ Not used | Composition of existing skills (earnings-calendar, sector-analyst, economic-calendar-fetcher, market-news-analyst / gdelt-news-catalyst, plus a generic movers price feed); consumes their documented JSON outputs as input files; pure offline assembler (FMP only indirectly via the sub-skills) |
 | **Options Strategy Advisor** | 🟡 Optional | ❌ Not used | ❌ Not used | Financial Modeling Prep API |
 | **PEAD Screener** | ✅ Required | ❌ Not used | ❌ Not used | Financial Modeling Prep API |
 | **Pair Trade Screener** | ✅ Required | ❌ Not used | ❌ Not used | Financial Modeling Prep API |
 | **Parabolic Short Trade Planner** | ✅ Required | ❌ Not used | 🟡 Optional | Financial Modeling Prep API |
 | **Portfolio Manager** | ❌ Not used | ❌ Not used | ✅ Required | Alpaca brokerage MCP/API |
-| **Position Sizer** | ❌ Not used | ❌ Not used | ❌ Not used | Pure calculation; works offline |
-| **Robinhood Trade Executor** | ❌ Not used | ❌ Not used | ❌ Not used | Robinhood MCP trading tools (agent.robinhood.com/mcp/trading) for $50 notional equity buys; held-position lookup for dedup; Long-stock buy-candidate filter (select_buy_candidates.py) runs locally |
-| **Scenario Analyzer** | ❌ Not used | ❌ Not used | ❌ Not used | Headline / news search via WebSearch |
+| **Position Sizer** | 🟡 Optional | ❌ Not used | ❌ Not used | Alternative daily-history source for the liquidity_check.py pre-trade check (FMP_API_KEY) |
+| **Retail Sentiment Ingestor** | ❌ Not used | ❌ Not used | ❌ Not used | Keyless StockTwits cashtag streams (user-applied Bullish/Bearish labels); Keyless Reddit (r/wallstreetbets, r/stocks, r/investing) posts; Optional X sweep via X_API_KEY / --x-api-key (paid full-archive tier for event-window search); Deterministic scoring + vault write run locally (no LLM extraction step) |
+| **Robinhood Trade Executor** | ❌ Not used | ❌ Not used | ❌ Not used | Robinhood MCP connector (Robinhood Agentic Trading, agent.robinhood.com) place_equity_order for fixed-notional long-stock buys; trusts the upstream selection with no portfolio/tradability pre-checks. Buy-candidate selection is interpreted inline from the social-signal-ingestor index (no local script). |
+| **Scenario Analyzer** | ❌ Not used | ❌ Not used | ❌ Not used | Headline / news search via WebSearch; Optional forward base rates via the free keyless Polymarket Gamma API (scripts/polymarket_odds.py) |
 | **Sector Analyst** | ❌ Not used | ❌ Not used | ❌ Not used | Chart screenshot input |
+| **Short-Squeeze Radar** | ❌ Not used | ❌ Not used | ❌ Not used | Free FINRA Reg SHO daily short-sale volume files (no auth); Optional bi-monthly short-interest CSV/JSON (FINRA/NASDAQ/broker) for days-to-cover ranking; Ranking / inflection detection / classification run locally (stdlib only) |
 | **Signal Postmortem** | ❌ Not used | ❌ Not used | ❌ Not used | Postmortem framework; pure calculation |
 | **Skill Designer** | ❌ Not used | ❌ Not used | ❌ Not used | Generates skill scaffolding from idea specs |
 | **Skill Idea Miner** | ❌ Not used | ❌ Not used | ❌ Not used | Mines session logs for skill ideas |
@@ -277,7 +285,7 @@ The table below is **auto-generated** from `skills-index.yaml` by `scripts/gener
 | **Ticker Enricher** | ❌ Not used | ❌ Not used | ❌ Not used | Company metadata + recommendation/current prices via yfinance; Record shaping + gain/age computation run locally |
 | **Trade Hypothesis Ideator** | ❌ Not used | ❌ Not used | ❌ Not used | Hypothesis generation from journal/data inputs; pure calculation |
 | **Trade Performance Coach** | ❌ Not used | ❌ Not used | ❌ Not used | Works from local trader-memory / postmortem / journal records; no network or paid API required |
-| **Trader Memory Core** | 🟡 Optional | ❌ Not used | ❌ Not used | Financial Modeling Prep API |
+| **Trader Memory Core** | 🟡 Optional | ❌ Not used | ❌ Not used | FMP optional for MAE/MFE and the alpha benchmark (SPY); reflection log and past-context are offline |
 | **Trading Skills Navigator** | ❌ Not used | ❌ Not used | ❌ Not used | Reads local skills-index.yaml + workflows/*.yaml (or bundled snapshot); no network |
 | **US Market Bubble Detector** | ❌ Not used | ❌ Not used | ❌ Not used | User provides indicators |
 | **US Stock Analysis** | ❌ Not used | ❌ Not used | ❌ Not used | User provides data |

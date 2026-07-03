@@ -700,6 +700,69 @@ Load these references as needed during analysis:
 
 ## Advanced Features
 
+### Capital Rotation (scripts/rotation.py)
+
+When the book is capital-saturated, a strong fresh buy candidate cannot be
+entered — not because the signal is weak, but because there is no room (notional
+cap hit or max-position count reached). Capital allocated first-come-first-served
+never gets re-ranked, so a weak, stale holding blocks a better idea. The
+`scripts/rotation.py` decision engine decides when to rotate the weakest stale
+laggard out to make room.
+
+**Use when:** a screener/candidate generator (e.g. breakout-trade-planner,
+robinhood-trade-executor, a VCP/CANSLIM run) reports a candidate that was
+**blocked**, and the block was purely a capital constraint. Feed the candidate's
+`{symbol, composite, blocked_reasons}` plus current holdings enriched with
+per-position ROE and hold-age.
+
+**Guardrails (all must pass before it fires):**
+1. **Capital-only guard** — rotation fires ONLY when *every* `blocked_reason`
+   matches a capital-saturation marker (`notional`, `buying power`,
+   `insufficient cash`, `capital cap`, `max positions`, `max concurrent`,
+   `concurrency`). If any reason is a real risk veto (regime, liquidity, news,
+   correlation, stop distance, conviction ...), the trade stays blocked — the
+   engine never resurrects a risk-vetoed entry.
+2. **Winner protection** — never evict a holding whose ROE is at/above
+   `protect_winner_roe_pct` (default 15%). Ride winners; let trends run.
+3. **Minimum hold** — a holding must have been held at least `min_hold_days`
+   (default 5) to be evictable. Anti-churn.
+4. **Round-trip justification** — the candidate `composite` must be at least
+   `min_candidate_composite` (default 70) to justify commission/slippage.
+5. Among the eligible non-winners, evict the **weakest** (lowest ROE); ties
+   break toward the staler position, then alphabetically.
+
+**Shadow mode first.** The engine is advisory: it returns an auditable
+`RotationDecision` (evict X, enter Y, or hold, plus a `considered[]` trail and
+`shadow_mode=true`). Run it in shadow mode — log the decisions and compare
+against live outcomes — before ever acting on it. Only pass `--live` once the
+decisions have been validated. This skill never auto-executes a rotation; the
+decision is a recommendation the user reviews and confirms via the normal
+Alpaca order flow.
+
+```bash
+# Candidate JSON: {"symbol":"NVDA","composite":82,"blocked_reasons":["notional cap reached"]}
+# Positions JSON: [{"symbol":"KO","roe_pct":2.5,"age_days":40}, ...]
+python3 skills/portfolio-manager/scripts/rotation.py \
+  --candidate candidate.json --positions positions.json --output-dir reports/
+
+# Normalize raw Alpaca /v2/positions (unrealized_plpc -> roe_pct); supply hold
+# ages via a {symbol: age_days} map since positions payloads omit age.
+python3 skills/portfolio-manager/scripts/rotation.py \
+  --candidate candidate.json --positions alpaca_positions.json \
+  --alpaca --age-days-json ages.json --output-dir reports/
+
+# Tunable thresholds; --live flips off the default shadow-mode label.
+python3 skills/portfolio-manager/scripts/rotation.py \
+  --candidate candidate.json --positions positions.json \
+  --min-candidate-composite 75 --min-hold-days 10 --protect-winner-roe-pct 20
+```
+
+Outputs `rotation_decision_<timestamp>.{json,md}` to `--output-dir` (default
+`reports/`). Note: Alpaca `/v2/positions` records do not carry hold age, so
+supply it via `--age-days-json` (derive from filled-order timestamps); symbols
+missing from the map default to age 0, which conservatively protects them from
+eviction.
+
 ### Tax-Loss Harvesting Opportunities
 
 Identify positions with unrealized losses suitable for tax-loss harvesting:

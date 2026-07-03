@@ -1,0 +1,43 @@
+{
+  "schema_version": "1.0",
+  "generated": "2026-07-03 06:15:00",
+  "query": "FCTA",
+  "ticker": "FCTA",
+  "keyword": null,
+  "timespan": "3d",
+  "fresh_window_hours": 24,
+  "coverage": {
+    "n_recent": 42,
+    "surge_x": 6.5,
+    "breaking": true,
+    "elevated": true,
+    "severity": "high",
+    "baseline": "median of the earlier GDELT coverage-volume bins",
+    "note": "BREAKING — coverage surging 6.5x its recent baseline"
+  },
+  "blackout_signal": {
+    "schema_version": "1.0",
+    "signal": "news_blackout",
+    "ticker": "FCTA",
+    "keyword": null,
+    "blackout": true,
+    "severity": "high",
+    "surge_x": 6.5,
+    "n_recent": 42,
+    "reason": "coverage surge 6.5x baseline at/above the 4.0x breaking threshold",
+    "recommended_action": "Suppress new entries until the catalyst window clears.",
+    "top_headline": "Fictional Cloud Corp confirms takeover talks with mega-cap suitor",
+    "as_of": "2026-07-03 06:15:00"
+  },
+  "headlines": [
+    {
+      "title": "Fictional Cloud Corp confirms takeover talks with mega-cap suitor",
+      "url": "https://example.com/fcta-ma",
+      "domain": "example.com",
+      "seen": "2026-07-03T06:00:00Z",
+      "source": "GDELT"
+    }
+  ],
+  "sources": ["GDELT"],
+  "caveats": ["GDELT indexes coverage VOLUME, not price."]
+}

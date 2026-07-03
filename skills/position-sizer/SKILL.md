@@ -1,6 +1,6 @@
 ---
 name: position-sizer
-description: Calculate risk-based position sizes for long stock trades. Use when user asks about position sizing, how many shares to buy, risk per trade, Kelly criterion, ATR-based sizing, or portfolio risk allocation. Supports stop-loss distance calculation, volatility scaling, and sector concentration checks.
+description: Calculate risk-based position sizes for long stock trades. Use when user asks about position sizing, how many shares to buy, risk per trade, Kelly criterion, ATR-based sizing, or portfolio risk allocation. Supports stop-loss distance calculation, volatility scaling, sector concentration checks, and a pre-trade liquidity / slippage gate (bid-ask spread, dollar volume, turnover, Amihud illiquidity, square-root market-impact) that caps a position when estimated execution cost exceeds a basis-point budget.
 ---
 
 # Position Sizer
@@ -25,10 +25,32 @@ All methods apply portfolio constraints (max position %, max sector %) and outpu
 
 ## Prerequisites
 
-- No API keys required
-- Python 3.9+ with standard library only
+- Core sizing: no API keys required; Python 3.9+ with standard library only
+- Pre-trade liquidity check (`scripts/liquidity_check.py`): optionally fetches data via `yfinance` (keyless) or FMP daily history (`--api-key` / `FMP_API_KEY`). The pure metric functions and the slippage gate run offline; only live fetches need those libraries.
 
 ## Workflow
+
+### Step 0: Pre-Trade Liquidity Check (Optional but Recommended)
+
+Before sizing, assess whether the intended order is tradable without excessive execution cost. Run the liquidity check for the candidate ticker(s):
+
+```bash
+# Single ticker, order sized in shares (yfinance, keyless)
+python3 skills/position-sizer/scripts/liquidity_check.py AAPL \
+  --order-shares 5000 --output-dir reports/
+
+# Order sized in dollars, FMP source
+python3 skills/position-sizer/scripts/liquidity_check.py AAPL \
+  --order-dollars 250000 --source fmp --api-key $FMP_API_KEY --output-dir reports/
+
+# Multi-ticker comparison
+python3 skills/position-sizer/scripts/liquidity_check.py AAPL AMD INTC \
+  --order-shares 5000 --output-dir reports/
+```
+
+The report computes bid-ask spread (absolute / % / bps), average daily volume and dollar volume, turnover vs. float, Amihud illiquidity (`mean(|ret| / daily $vol) * 1e9`), volume coefficient of variation, and estimated market-impact slippage via the square-root model (`impact_bps = sigma * sqrt(order / ADV) * 1e4`). Each ticker gets a liquidity grade, a slippage grade (minimal / low / moderate / high / severe), and warnings for micro-cap names, wide spreads, spiky volume, or slippage above 50 bps. Read `references/liquidity_reference.md` for formulas and interpretation thresholds.
+
+Feed the resulting JSON into Step 5's slippage gate with `--liquidity-json`, or read `avg_daily_volume` and `daily_volatility` from it to pass `--adv` and `--daily-volatility` manually.
 
 ### Step 1: Gather Trade Parameters
 
@@ -111,6 +133,24 @@ python3 skills/position-sizer/scripts/position_sizer.py \
 
 Explain which constraint is binding and why it limits the position.
 
+**Slippage gate.** Add `--max-slippage-bps` to cap the position so its estimated market-impact slippage stays within a basis-point budget. This requires the average daily volume and daily volatility, supplied either directly (`--adv`, `--daily-volatility`) or from a `liquidity_check.py` report (`--liquidity-json`, optionally `--ticker` to select an entry):
+
+```bash
+# Direct inputs
+python3 skills/position-sizer/scripts/position_sizer.py \
+  --account-size 100000 --entry 155 --stop 148.50 --risk-pct 1.0 \
+  --max-slippage-bps 20 --adv 250000 --daily-volatility 0.03 \
+  --output-dir reports/
+
+# From a liquidity_check.py report
+python3 skills/position-sizer/scripts/position_sizer.py \
+  --account-size 100000 --entry 155 --stop 148.50 --risk-pct 1.0 \
+  --max-slippage-bps 20 --liquidity-json reports/liquidity_check_2026-07-03_120000.json \
+  --ticker AAPL --output-dir reports/
+```
+
+The gate participates in the strictest-constraint-wins logic: the largest order whose square-root impact fits the budget is `ADV * (budget / (sigma * 1e4)) ** 2`. When it binds, `binding_constraint` is `max_slippage_bps` and the result's `slippage` block reports `capped: true`. When the budget is not binding, the `slippage` block still records the estimated cost of the risk-calculated size for transparency.
+
 ### Step 6: Generate Position Report
 
 Present the final recommendation including:
@@ -168,7 +208,9 @@ Reports are saved to `reports/` with filenames `position_sizer_YYYY-MM-DD_HHMMSS
 ## Resources
 
 - `references/sizing_methodologies.md`: Comprehensive guide to Fixed Fractional, ATR-based, and Kelly Criterion methods with examples, comparison table, and risk management principles
-- `scripts/position_sizer.py`: Main calculation script (CLI interface)
+- `references/liquidity_reference.md`: Liquidity and execution-cost metrics — bid-ask spread, dollar volume, turnover, Amihud illiquidity, square-root market-impact model, and graded thresholds
+- `scripts/position_sizer.py`: Main calculation script (CLI interface), including the `--max-slippage-bps` liquidity gate
+- `scripts/liquidity_check.py`: Pre-trade liquidity / slippage analyzer (yfinance or FMP; multi-ticker comparison; JSON output consumable by the sizer)
 
 ## Key Principles
 
@@ -179,3 +221,4 @@ Reports are saved to `reports/` with filenames `position_sizer_YYYY-MM-DD_HHMMSS
 5. **Half Kelly**: Never use full Kelly in practice; half Kelly captures 75% of growth with far less risk
 6. **Portfolio heat**: Total open risk should not exceed 6-8% of account equity
 7. **Asymmetry of losses**: A 50% loss requires a 100% gain to recover; size accordingly
+8. **Liquidity is a real constraint**: A risk-optimal size you cannot execute cheaply is not optimal. Check spread and market impact before committing; a position over ~25 bps of estimated slippage is likely too large for the name's liquidity

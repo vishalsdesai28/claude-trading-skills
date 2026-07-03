@@ -1,0 +1,28 @@
+{
+  "_note": "Synthetic yfinance-shaped estimate data (fictional ticker DNCO). Represents a 'quiet downgrade': falling EPS estimates and negative revision breadth with no dramatic headline.",
+  "ticker": "DNCO",
+  "earnings_estimate": {
+    "0q": {"numberOfAnalysts": 14, "avg": 0.88, "low": 0.72, "high": 1.02, "yearAgoEps": 0.95, "growth": -0.074},
+    "0y": {"numberOfAnalysts": 16, "avg": 3.40, "low": 3.05, "high": 3.75, "yearAgoEps": 3.62, "growth": -0.061}
+  },
+  "revenue_estimate": {
+    "0q": {"numberOfAnalysts": 13, "avg": 5100000000, "low": 4900000000, "high": 5300000000, "yearAgoRevenue": 5250000000, "growth": -0.029}
+  },
+  "eps_trend": {
+    "0q": {"current": 0.88, "7daysAgo": 0.90, "30daysAgo": 0.95, "60daysAgo": 0.99, "90daysAgo": 1.02},
+    "0y": {"current": 3.40, "7daysAgo": 3.46, "30daysAgo": 3.58, "60daysAgo": 3.70, "90daysAgo": 3.82}
+  },
+  "eps_revisions": {
+    "0q": {"upLast7days": 0, "downLast7days": 4, "upLast30days": 1, "downLast30days": 9},
+    "0y": {"upLast7days": 0, "downLast7days": 3, "upLast30days": 2, "downLast30days": 8}
+  },
+  "growth_estimates": {
+    "0q": {"DNCO": -0.074, "Industry": 0.02, "Sector": 0.03, "S&P 500": 0.075}
+  },
+  "earnings_history": [
+    {"date": "2025-08-01", "epsEstimate": 0.98, "epsActual": 0.93, "epsDifference": -0.05, "surprisePercent": -0.051},
+    {"date": "2025-05-02", "epsEstimate": 1.05, "epsActual": 1.01, "epsDifference": -0.04, "surprisePercent": -0.038},
+    {"date": "2025-02-01", "epsEstimate": 1.12, "epsActual": 1.14, "epsDifference": 0.02, "surprisePercent": 0.018},
+    {"date": "2024-11-01", "epsEstimate": 1.20, "epsActual": 1.10, "epsDifference": -0.10, "surprisePercent": -0.083}
+  ]
+}

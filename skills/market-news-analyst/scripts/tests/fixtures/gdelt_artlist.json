@@ -1,0 +1,36 @@
+{
+  "articles": [
+    {
+      "url": "https://www.reuters.com/markets/nvidia-china-curbs",
+      "title": "NVIDIA halts China chip shipments amid new export curbs",
+      "seendate": "20260703T143000Z",
+      "domain": "reuters.com",
+      "language": "English",
+      "sourcecountry": "United States"
+    },
+    {
+      "url": "https://www.cnbc.com/2026/07/03/nvda-guidance-supply",
+      "title": "Analysts weigh NVDA guidance after supply update",
+      "seendate": "20260703T101500Z",
+      "domain": "cnbc.com",
+      "language": "English",
+      "sourcecountry": "United States"
+    },
+    {
+      "url": "https://www.bloomberg.com/news/chipmakers-slide",
+      "title": "Chipmakers slide as trade tensions flare",
+      "seendate": "20260702T230000Z",
+      "domain": "bloomberg.com",
+      "language": "English",
+      "sourcecountry": "United States"
+    },
+    {
+      "url": "https://example.com/old-nvda-retrospective",
+      "title": "Old NVDA retrospective piece from last month",
+      "seendate": "20260615T120000Z",
+      "domain": "example.com",
+      "language": "English",
+      "sourcecountry": "United States"
+    }
+  ]
+}

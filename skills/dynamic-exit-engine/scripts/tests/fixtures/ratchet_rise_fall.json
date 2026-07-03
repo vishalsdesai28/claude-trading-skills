@@ -1,0 +1,14 @@
+{
+  "_doc": "Entry 100. Rises 100->130 (peak), dips to 122, recovers to 128, dips to 124. With default policy the phase-2 floor ratchets 92->103.5->106->110->115 and then HOLDS at 115 through every subsequent dip. No breach fires (all marks stay above 115). Used to assert floor_trace is monotonic non-decreasing.",
+  "AAPL": [
+    {"date": "2026-01-02", "close": 100.0},
+    {"date": "2026-01-05", "close": 105.0},
+    {"date": "2026-01-06", "close": 110.0},
+    {"date": "2026-01-07", "close": 120.0},
+    {"date": "2026-01-08", "close": 130.0},
+    {"date": "2026-01-09", "close": 125.0},
+    {"date": "2026-01-12", "close": 122.0},
+    {"date": "2026-01-13", "close": 128.0},
+    {"date": "2026-01-14", "close": 124.0}
+  ]
+}

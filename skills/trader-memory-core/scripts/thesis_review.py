@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import logging
+import os
 import sys
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -11,12 +12,15 @@ from typing import Any
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
+import reflection_log  # noqa: E402
 import thesis_store  # noqa: E402
 
 logger = logging.getLogger(__name__)
 
 JOURNAL_DIR_NAME = "journal"
+REFLECTION_LOG_NAME = "reflection_log.md"
 TERMINAL_STATUSES = {"CLOSED", "INVALIDATED"}
+DEFAULT_BENCHMARK = "SPY"
 
 
 # -- MAE / MFE ----------------------------------------------------------------
@@ -76,6 +80,165 @@ def compute_mae_mfe(thesis: dict, price_adapter: Any | None = None) -> dict[str,
     return result
 
 
+# -- Alpha attribution ---------------------------------------------------------
+
+
+def compute_alpha(
+    thesis: dict,
+    benchmark_adapter: Any | None = None,
+    benchmark: str = DEFAULT_BENCHMARK,
+) -> dict:
+    """Compute the trade's alpha vs a benchmark over the holding window.
+
+    ``alpha = trade return - benchmark return`` measured across the same
+    entry-to-exit dates. The trade return prefers the recorded
+    ``outcome.pnl_pct`` (trim-aware, cumulative) and falls back to the raw
+    entry→exit price move. The benchmark return uses the first and last daily
+    close returned by ``benchmark_adapter.get_daily_closes(benchmark, ...)``.
+
+    Args:
+        thesis: A CLOSED / INVALIDATED thesis dict.
+        benchmark_adapter: Object with ``get_daily_closes(ticker, from, to)``
+            (e.g. FMPPriceAdapter, or a yfinance-backed adapter). ``None`` ⇒
+            raw return only, alpha stays ``None``.
+        benchmark: Benchmark symbol (default ``SPY``).
+
+    Returns:
+        {"raw_return_pct", "benchmark_return_pct", "alpha_pct",
+         "benchmark", "holding_days", "alpha_source"} — any value may be None.
+    """
+    outcome = thesis.get("outcome", {})
+    result = {
+        "raw_return_pct": None,
+        "benchmark_return_pct": None,
+        "alpha_pct": None,
+        "benchmark": benchmark,
+        "holding_days": outcome.get("holding_days"),
+        "alpha_source": None,
+    }
+
+    entry = thesis.get("entry", {})
+    exit_data = thesis.get("exit", {})
+    entry_price = entry.get("actual_price")
+    entry_date = entry.get("actual_date")
+    exit_price = exit_data.get("actual_price")
+    exit_date = exit_data.get("actual_date")
+
+    raw_return = outcome.get("pnl_pct")
+    if raw_return is None and entry_price and exit_price:
+        raw_return = (exit_price - entry_price) / entry_price * 100
+    if raw_return is not None:
+        result["raw_return_pct"] = round(raw_return, 2)
+
+    if benchmark_adapter is None or not (entry_date and exit_date):
+        return result
+
+    try:
+        prices = benchmark_adapter.get_daily_closes(benchmark, entry_date[:10], exit_date[:10])
+    except Exception as e:  # network / API errors are non-fatal for the postmortem
+        logger.warning("Failed to fetch benchmark %s: %s", benchmark, e)
+        return result
+
+    closes = [p["close"] for p in (prices or []) if p.get("close")]
+    if len(closes) < 2 or not closes[0]:
+        return result
+
+    bench_return = (closes[-1] - closes[0]) / closes[0] * 100
+    result["benchmark_return_pct"] = round(bench_return, 2)
+    if result["raw_return_pct"] is not None:
+        result["alpha_pct"] = round(result["raw_return_pct"] - bench_return, 2)
+        result["alpha_source"] = "benchmark_eod"
+
+    return result
+
+
+def _thesis_rating(thesis: dict) -> str:
+    """Decision-time label for the log tag (confidence → grade → type)."""
+    conf = thesis.get("confidence")
+    if conf:
+        return str(conf)
+    grade = (thesis.get("origin") or {}).get("screening_grade")
+    if grade:
+        return str(grade)
+    return thesis.get("thesis_type", "long")
+
+
+def _primary_pillar(thesis: dict) -> str:
+    """The headline thesis pillar to judge held/failed (evidence → statement)."""
+    evidence = thesis.get("evidence") or []
+    if evidence:
+        pillar = str(evidence[0]).strip()
+    else:
+        pillar = (thesis.get("thesis_statement") or "the core thesis").strip()
+    return pillar[:100] + ("…" if len(pillar) > 100 else "")
+
+
+def compose_reflection(thesis: dict, alpha_info: dict) -> str:
+    """Build a terse 2-4 sentence reflection judging the closed trade.
+
+    Deterministic template (no LLM) covering, in order: (1) whether the
+    directional call was correct — citing the *alpha* figure, not the raw
+    return; (2) which thesis pillar held or failed; (3) one concrete lesson.
+    Kept compact so it can be re-injected into future analysis prompts.
+    """
+    ticker = thesis.get("ticker", "the position")
+    alpha = alpha_info.get("alpha_pct")
+    raw = alpha_info.get("raw_return_pct")
+    bench = alpha_info.get("benchmark", DEFAULT_BENCHMARK)
+    bench_ret = alpha_info.get("benchmark_return_pct")
+    days = alpha_info.get("holding_days")
+    exit_reason = (thesis.get("exit") or {}).get("exit_reason")
+    pillar = _primary_pillar(thesis)
+    window = f" over {days} days" if days else ""
+
+    # 1. Directional call — cite alpha, not raw return.
+    if alpha is not None:
+        beat = alpha > 0
+        verb = "beat" if beat else "lagged"
+        s1 = (
+            f"The long call on {ticker} {verb} {bench} by {abs(alpha):.1f}pp{window} "
+            f"({raw:+.1f}% vs {bench} {bench_ret:+.1f}%), so the directional call was "
+            f"{'correct' if beat else 'not worth the risk versus a passive hold'}."
+        )
+    elif raw is not None:
+        beat = raw > 0
+        s1 = (
+            f"Alpha vs {bench} could not be computed (no benchmark data){window}; the raw "
+            f"return was {raw:+.1f}%, so judge the call on absolute terms with caution."
+        )
+    else:
+        beat = None
+        s1 = "Neither the raw return nor the alpha could be computed from the recorded prices."
+
+    # 2. Which pillar held / failed.
+    if beat:
+        s2 = f"The core pillar — {pillar} — held through the hold."
+    elif beat is False:
+        if exit_reason == "stop_hit":
+            s2 = f"The stop fired before the core pillar ({pillar}) could play out."
+        elif thesis.get("status") == "INVALIDATED":
+            s2 = f"The thesis was invalidated: {pillar} broke down."
+        else:
+            s2 = f"The core pillar — {pillar} — did not carry the trade."
+    else:
+        s2 = f"With no return recorded, the fate of the core pillar ({pillar}) is unresolved."
+
+    # 3. One concrete lesson.
+    lesson = (thesis.get("outcome") or {}).get("lessons_learned")
+    if lesson:
+        s3 = f"Lesson: {str(lesson).strip()}"
+    elif beat:
+        s3 = "Lesson: this setup earned its alpha — repeat the entry discipline that produced it."
+    elif beat is False and exit_reason == "stop_hit":
+        s3 = "Lesson: size to the stop so a single invalidation stays within the risk budget."
+    elif beat is False:
+        s3 = "Lesson: define a sharper kill-criterion up front so a stalling pillar exits sooner."
+    else:
+        s3 = "Lesson: record entry/exit prices at close so the next postmortem can measure alpha."
+
+    return " ".join([s1, s2, s3])
+
+
 # -- Postmortem ----------------------------------------------------------------
 
 
@@ -84,14 +247,32 @@ def generate_postmortem(
     state_dir: str,
     price_adapter: Any | None = None,
     journal_dir: str | None = None,
+    *,
+    benchmark_adapter: Any | None = None,
+    benchmark: str = DEFAULT_BENCHMARK,
+    reflection_log_path: str | None = None,
+    reflection_text: str | None = None,
+    with_reflection: bool = True,
 ) -> str:
     """Generate a postmortem markdown report for a closed thesis.
+
+    Also computes the trade's alpha vs ``benchmark`` and appends an
+    alpha-attribution reflection to the reflection log (pending → resolved,
+    idempotent). Re-running the postmortem never duplicates a log entry.
 
     Args:
         thesis_id: Thesis ID to generate postmortem for.
         state_dir: Path to state/theses/ directory.
-        price_adapter: Optional FMPPriceAdapter for MAE/MFE.
+        price_adapter: Optional adapter for MAE/MFE; also reused as the
+            benchmark adapter when ``benchmark_adapter`` is not supplied.
         journal_dir: Path to journal directory (default: state/journal/).
+        benchmark_adapter: Optional adapter for the benchmark return.
+        benchmark: Benchmark symbol for the alpha figure (default SPY).
+        reflection_log_path: Override for the reflection log file
+            (default: ``<journal_dir>/reflection_log.md``).
+        reflection_text: Caller-supplied reflection prose; when omitted a
+            deterministic template reflection is composed.
+        with_reflection: Set False to skip alpha + reflection entirely.
 
     Returns:
         Path to the generated postmortem file.
@@ -110,19 +291,51 @@ def generate_postmortem(
     thesis["outcome"]["mfe_pct"] = mae_mfe["mfe_pct"]
     thesis["outcome"]["mae_mfe_source"] = mae_mfe["mae_mfe_source"]
 
-    # Update thesis with MAE/MFE
-    thesis_store.update(state_path, thesis_id, {"outcome": thesis["outcome"]})
-
-    # Generate postmortem from template
+    # Resolve journal dir / reflection log path early (needed for the log).
     if journal_dir:
         j_dir = Path(journal_dir)
     else:
         j_dir = state_path.parent / JOURNAL_DIR_NAME
     j_dir.mkdir(parents=True, exist_ok=True)
+    log_path = Path(reflection_log_path) if reflection_log_path else j_dir / REFLECTION_LOG_NAME
+
+    # Compute alpha + reflection (benchmark adapter falls back to price adapter).
+    reflection = None
+    if with_reflection:
+        bench_adapter = benchmark_adapter if benchmark_adapter is not None else price_adapter
+        alpha_info = compute_alpha(thesis, bench_adapter, benchmark)
+        thesis["outcome"]["raw_return_pct"] = alpha_info["raw_return_pct"]
+        thesis["outcome"]["benchmark"] = alpha_info["benchmark"]
+        thesis["outcome"]["benchmark_return_pct"] = alpha_info["benchmark_return_pct"]
+        thesis["outcome"]["alpha_pct"] = alpha_info["alpha_pct"]
+        thesis["outcome"]["alpha_source"] = alpha_info["alpha_source"]
+        reflection = reflection_text or compose_reflection(thesis, alpha_info)
+        thesis["outcome"]["reflection"] = reflection
+
+    # Single outcome update (MAE/MFE + alpha + reflection).
+    thesis_store.update(state_path, thesis_id, {"outcome": thesis["outcome"]})
 
     content = _render_postmortem(thesis)
     pm_path = j_dir / f"pm_{thesis_id}.md"
     pm_path.write_text(content)
+
+    # Reflection log: pending → resolved lifecycle, both steps idempotent.
+    if with_reflection and reflection is not None:
+        reflection_log.store_pending(
+            log_path,
+            thesis_id,
+            thesis["ticker"],
+            _thesis_rating(thesis),
+            thesis.get("thesis_statement") or "",
+        )
+        reflection_log.resolve(
+            log_path,
+            thesis_id,
+            raw_return=alpha_info["raw_return_pct"],
+            alpha=alpha_info["alpha_pct"],
+            holding_days=alpha_info["holding_days"],
+            reflection=reflection,
+        )
 
     logger.info("Generated postmortem: %s", pm_path)
     return str(pm_path)
@@ -143,6 +356,8 @@ def _render_postmortem(thesis: dict) -> str:
         if val is None:
             return "—"
         return f"{val}{suffix}"
+
+    benchmark = outcome.get("benchmark") or DEFAULT_BENCHMARK
 
     return f"""# Postmortem: {thesis["thesis_id"]}
 
@@ -172,6 +387,8 @@ def _render_postmortem(thesis: dict) -> str:
 | Exit Reason | {_fmt(exit_data.get("exit_reason"))} |
 | MAE (%) | {_fmt(outcome.get("mae_pct"), "%")} |
 | MFE (%) | {_fmt(outcome.get("mfe_pct"), "%")} |
+| {benchmark} Return (%) | {_fmt(outcome.get("benchmark_return_pct"), "%")} |
+| Alpha vs {benchmark} (pp) | {_fmt(outcome.get("alpha_pct"))} |
 
 ## Position
 
@@ -192,6 +409,10 @@ def _render_postmortem(thesis: dict) -> str:
 ## Lessons Learned
 
 {outcome.get("lessons_learned") or "(not yet recorded)"}
+
+## Reflection
+
+{outcome.get("reflection") or "(not generated)"}
 """
 
 
@@ -456,6 +677,24 @@ def _render_monthly_report(month: str, start: str, end: str, theses: list[tuple[
 # -- CLI -----------------------------------------------------------------------
 
 
+def _build_price_adapter(api_key: str | None) -> Any | None:
+    """Construct an FMP price adapter if a key is available, else None.
+
+    Used for both MAE/MFE (ticker prices) and the alpha benchmark (SPY).
+    Import is deferred so the module stays importable with the stdlib alone.
+    """
+    if not (api_key or os.environ.get("FMP_API_KEY")):
+        logger.info("No FMP API key — postmortem will omit MAE/MFE and alpha.")
+        return None
+    try:
+        from fmp_price_adapter import FMPPriceAdapter
+
+        return FMPPriceAdapter(api_key=api_key)
+    except Exception as e:  # missing key / import issue → graceful degrade
+        logger.warning("Could not build price adapter: %s", e)
+        return None
+
+
 def main(argv: list[str] | None = None) -> int:
     import argparse
 
@@ -473,6 +712,20 @@ def main(argv: list[str] | None = None) -> int:
     pm_p = sub.add_parser("postmortem", help="Generate postmortem for a thesis")
     pm_p.add_argument("thesis_id")
     pm_p.add_argument("--journal-dir", default=None)
+    pm_p.add_argument(
+        "--benchmark", default=DEFAULT_BENCHMARK, help="Alpha benchmark (default SPY)"
+    )
+    pm_p.add_argument("--api-key", default=None, help="FMP API key (else $FMP_API_KEY)")
+    pm_p.add_argument("--reflection-log", default=None, help="Override reflection log path")
+    pm_p.add_argument("--no-reflection", action="store_true", help="Skip alpha + reflection")
+
+    # past-context (inject prior reflections into an analysis prompt)
+    pc_p = sub.add_parser("past-context", help="Print past-context block for a ticker")
+    pc_p.add_argument("--ticker", required=True)
+    pc_p.add_argument("--reflection-log", default=None, help="Reflection log path")
+    pc_p.add_argument("--journal-dir", default=None)
+    pc_p.add_argument("--n-same", type=int, default=3)
+    pc_p.add_argument("--n-cross", type=int, default=3)
 
     # summary
     summary_p = sub.add_parser("summary", help="Show summary statistics")
@@ -495,8 +748,33 @@ def main(argv: list[str] | None = None) -> int:
         results = thesis_store.list_review_due(Path(args.state_dir), as_of)
         print(json.dumps(results, indent=2))
     elif args.command == "postmortem":
-        path = generate_postmortem(args.thesis_id, args.state_dir, journal_dir=args.journal_dir)
+        adapter = None
+        if not args.no_reflection:
+            adapter = _build_price_adapter(args.api_key)
+        path = generate_postmortem(
+            args.thesis_id,
+            args.state_dir,
+            price_adapter=adapter,
+            journal_dir=args.journal_dir,
+            benchmark=args.benchmark,
+            reflection_log_path=args.reflection_log,
+            with_reflection=not args.no_reflection,
+        )
         print(f"Postmortem generated: {path}")
+    elif args.command == "past-context":
+        if args.reflection_log:
+            log_path = args.reflection_log
+        else:
+            j_dir = (
+                Path(args.journal_dir)
+                if args.journal_dir
+                else (Path(args.state_dir).parent / JOURNAL_DIR_NAME)
+            )
+            log_path = j_dir / REFLECTION_LOG_NAME
+        block = reflection_log.get_past_context(
+            log_path, args.ticker, n_same=args.n_same, n_cross=args.n_cross
+        )
+        print(block or "(no past context)")
     elif args.command == "summary":
         if not any([args.ticker, args.status, args.since, args.as_of, args.by, args.compact]):
             s = summary_stats(args.state_dir)

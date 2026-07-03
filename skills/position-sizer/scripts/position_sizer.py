@@ -14,6 +14,8 @@ import sys
 from dataclasses import dataclass
 from datetime import datetime
 
+from liquidity_check import estimate_slippage_bps, max_shares_under_slippage
+
 
 @dataclass
 class SizingParameters:
@@ -30,6 +32,9 @@ class SizingParameters:
     max_sector_pct: float | None = None
     sector: str | None = None
     current_sector_exposure: float = 0.0
+    max_slippage_bps: float | None = None
+    adv: float | None = None
+    daily_volatility: float | None = None
 
 
 def validate_parameters(params: SizingParameters) -> None:
@@ -52,6 +57,12 @@ def validate_parameters(params: SizingParameters) -> None:
         raise ValueError("avg_win must be positive")
     if params.avg_loss is not None and params.avg_loss <= 0:
         raise ValueError("avg_loss must be positive")
+    if params.max_slippage_bps is not None and params.max_slippage_bps <= 0:
+        raise ValueError("max_slippage_bps must be positive")
+    if params.adv is not None and params.adv <= 0:
+        raise ValueError("adv must be positive")
+    if params.daily_volatility is not None and params.daily_volatility <= 0:
+        raise ValueError("daily_volatility must be positive")
 
 
 def calculate_fixed_fractional(params: SizingParameters) -> dict:
@@ -153,6 +164,25 @@ def apply_constraints(shares: int, params: SizingParameters) -> tuple[int, list[
             }
         )
         candidates.append(max_by_sector)
+
+    if (
+        params.max_slippage_bps is not None
+        and params.adv is not None
+        and params.daily_volatility is not None
+    ):
+        max_by_slippage = max_shares_under_slippage(
+            params.adv, params.daily_volatility, params.max_slippage_bps
+        )
+        if max_by_slippage is not None:
+            constraints.append(
+                {
+                    "type": "max_slippage_bps",
+                    "limit": params.max_slippage_bps,
+                    "max_shares": max_by_slippage,
+                    "binding": False,
+                }
+            )
+            candidates.append(max_by_slippage)
 
     final = max(0, min(candidates))
 
@@ -268,6 +298,29 @@ def calculate_position(params: SizingParameters) -> dict:
         result["risk_note"] = "Stop-loss not defined. Specify --stop to calculate risk dollars."
     result["binding_constraint"] = binding
 
+    # Liquidity / slippage detail (square-root market-impact model)
+    if (
+        params.max_slippage_bps is not None
+        and params.adv is not None
+        and params.daily_volatility is not None
+    ):
+        result["slippage"] = {
+            "max_slippage_bps": params.max_slippage_bps,
+            "adv": params.adv,
+            "daily_volatility": params.daily_volatility,
+            "risk_shares": risk_shares,
+            "risk_shares_slippage_bps": round(
+                estimate_slippage_bps(risk_shares, params.adv, params.daily_volatility), 2
+            ),
+            "max_shares_under_budget": max_shares_under_slippage(
+                params.adv, params.daily_volatility, params.max_slippage_bps
+            ),
+            "final_shares_slippage_bps": round(
+                estimate_slippage_bps(final_shares, params.adv, params.daily_volatility), 2
+            ),
+            "capped": binding == "max_slippage_bps",
+        }
+
     return result
 
 
@@ -330,6 +383,21 @@ def generate_markdown_report(result: dict) -> str:
         if result.get("binding_constraint"):
             lines.append("- **Binding Constraint:** {}".format(result["binding_constraint"]))
 
+        slip = result.get("slippage")
+        if slip:
+            lines.append("")
+            lines.append("## Liquidity / Slippage")
+            lines.append("- Slippage budget: {} bps".format(slip["max_slippage_bps"]))
+            lines.append(
+                "- Risk-calculated size: {} shares -> {} bps".format(
+                    slip["risk_shares"], slip["risk_shares_slippage_bps"]
+                )
+            )
+            lines.append("- Max shares within budget: {}".format(slip["max_shares_under_budget"]))
+            lines.append("- Final size slippage: {} bps".format(slip["final_shares_slippage_bps"]))
+            if slip["capped"]:
+                lines.append("- **Position capped by slippage budget**")
+
     return "\n".join(lines) + "\n"
 
 
@@ -385,10 +453,35 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument("--sector", type=str, help="Sector name for concentration check")
     parser.add_argument(
+        "--ticker",
+        type=str,
+        help="Ticker symbol (used to match an entry in --liquidity-json)",
+    )
+    parser.add_argument(
         "--current-sector-exposure",
         type=float,
         default=0.0,
         help="Current sector exposure as %% of account",
+    )
+    parser.add_argument(
+        "--max-slippage-bps",
+        type=float,
+        help="Cap position so estimated market-impact slippage stays within this budget (bps)",
+    )
+    parser.add_argument(
+        "--adv",
+        type=float,
+        help="Average daily volume (shares) for the slippage model",
+    )
+    parser.add_argument(
+        "--daily-volatility",
+        type=float,
+        help="Daily return volatility as a decimal (e.g. 0.02 for 2%%) for the slippage model",
+    )
+    parser.add_argument(
+        "--liquidity-json",
+        type=str,
+        help="liquidity_check.py JSON output; supplies --adv and --daily-volatility",
     )
     parser.add_argument(
         "--output-dir",
@@ -397,6 +490,30 @@ def build_parser() -> argparse.ArgumentParser:
         help="Output directory for reports",
     )
     return parser
+
+
+def load_liquidity_json(path: str, ticker: str | None = None) -> tuple[float | None, float | None]:
+    """Read avg_daily_volume and daily_volatility from a liquidity_check report.
+
+    Returns (adv, daily_volatility). When the report holds multiple tickers,
+    the entry matching ``ticker`` is used; otherwise the first entry is used.
+    """
+    with open(path) as f:
+        report = json.load(f)
+    entries = report.get("tickers", [])
+    if not entries:
+        return None, None
+    chosen = None
+    if ticker:
+        for e in entries:
+            if e.get("ticker", "").upper() == ticker.upper():
+                chosen = e
+                break
+    if chosen is None:
+        chosen = entries[0]
+    adv = chosen.get("avg_daily_volume")
+    vol = chosen.get("daily_volatility")
+    return (float(adv) if adv else None, float(vol) if vol else None)
 
 
 def main() -> None:
@@ -420,6 +537,14 @@ def main() -> None:
     else:
         parser.error("Must specify either --risk-pct or --win-rate mode")
 
+    # Resolve slippage-model inputs: explicit flags override --liquidity-json.
+    adv = args.adv
+    daily_vol = args.daily_volatility
+    if args.liquidity_json and (adv is None or daily_vol is None):
+        j_adv, j_vol = load_liquidity_json(args.liquidity_json, args.ticker)
+        adv = adv if adv is not None else j_adv
+        daily_vol = daily_vol if daily_vol is not None else j_vol
+
     params = SizingParameters(
         account_size=args.account_size,
         entry_price=args.entry,
@@ -434,6 +559,9 @@ def main() -> None:
         max_sector_pct=args.max_sector_pct,
         sector=args.sector,
         current_sector_exposure=args.current_sector_exposure,
+        max_slippage_bps=args.max_slippage_bps,
+        adv=adv,
+        daily_volatility=daily_vol,
     )
 
     try:
@@ -473,6 +601,15 @@ def main() -> None:
             )
         if result.get("risk_note"):
             print("Note: {}".format(result["risk_note"]))
+        slip = result.get("slippage")
+        if slip:
+            print(
+                "Slippage: {} bps (budget {} bps){}".format(
+                    slip["final_shares_slippage_bps"],
+                    slip["max_slippage_bps"],
+                    " [CAPPED]" if slip["capped"] else "",
+                )
+            )
     else:
         print("\nRecommended risk budget: ${:,.2f}".format(result["recommended_risk_budget"]))
         print("({}% of account)".format(result["recommended_risk_budget_pct"]))

@@ -2,15 +2,23 @@
 """
 Composite Scorer for Earnings Trade Analyzer
 
-Combines 5 factor scores with fixed weights into a composite score (0-100)
+Combines factor scores with fixed weights into a composite score (0-100)
 and assigns letter grades (A/B/C/D).
 
-Component Weights:
+Two weighting modes are supported for backward compatibility:
+
+5-factor (default, when no estimate-revision score is supplied):
   gap_size:            25%
   pre_earnings_trend:  30%
   volume_trend:        20%
   ma200_position:      15%
   ma50_position:       10%
+
+6-factor (when an estimate-revision momentum score is supplied): the
+analyst estimate-revision factor is added at 15% weight, with the other
+five factors reduced pro-rata so the weights still sum to exactly 1.0.
+This lets candidates facing quiet analyst downgrades be penalized even
+when their price/volume factors look strong.
 
 Grade Thresholds:
   A: 85+   "Strong earnings reaction with institutional accumulation"
@@ -19,12 +27,26 @@ Grade Thresholds:
   D: <55   "Weak setup, avoid"
 """
 
+from __future__ import annotations
+
 COMPONENT_WEIGHTS = {
     "gap_size": 0.25,
     "pre_earnings_trend": 0.30,
     "volume_trend": 0.20,
     "ma200_position": 0.15,
     "ma50_position": 0.10,
+}
+
+# 6-factor weights, used when an estimate-revision score is provided.
+# Sums to exactly 1.0; the estimate-revision factor claims 15%, taken
+# pro-rata from the original five factors.
+COMPONENT_WEIGHTS_6 = {
+    "gap_size": 0.22,
+    "pre_earnings_trend": 0.26,
+    "volume_trend": 0.17,
+    "ma200_position": 0.12,
+    "ma50_position": 0.08,
+    "estimate_revision": 0.15,
 }
 
 GRADE_THRESHOLDS = [
@@ -48,6 +70,7 @@ def calculate_composite_score(
     volume_score: float,
     ma200_score: float,
     ma50_score: float,
+    revision_score: float | None = None,
 ) -> dict:
     """
     Calculate weighted composite score and assign grade.
@@ -58,6 +81,11 @@ def calculate_composite_score(
         volume_score: Volume trend score (0-100)
         ma200_score: MA200 position score (0-100)
         ma50_score: MA50 position score (0-100)
+        revision_score: Optional analyst estimate-revision momentum score
+            (0-100). When None (default), the original 5-factor weighting
+            is used and the result is identical to prior behavior. When
+            supplied, the 6-factor weighting (COMPONENT_WEIGHTS_6) is used,
+            adding the estimate-revision factor at 15% weight.
 
     Returns:
         dict with:
@@ -71,16 +99,34 @@ def calculate_composite_score(
           - strongest_score: float
           - component_breakdown: dict
     """
-    components = {
-        "Gap Size": {"score": gap_score, "weight": COMPONENT_WEIGHTS["gap_size"]},
-        "Pre-Earnings Trend": {
-            "score": trend_score,
-            "weight": COMPONENT_WEIGHTS["pre_earnings_trend"],
-        },
-        "Volume Trend": {"score": volume_score, "weight": COMPONENT_WEIGHTS["volume_trend"]},
-        "MA200 Position": {"score": ma200_score, "weight": COMPONENT_WEIGHTS["ma200_position"]},
-        "MA50 Position": {"score": ma50_score, "weight": COMPONENT_WEIGHTS["ma50_position"]},
-    }
+    if revision_score is None:
+        weights = COMPONENT_WEIGHTS
+        components = {
+            "Gap Size": {"score": gap_score, "weight": weights["gap_size"]},
+            "Pre-Earnings Trend": {
+                "score": trend_score,
+                "weight": weights["pre_earnings_trend"],
+            },
+            "Volume Trend": {"score": volume_score, "weight": weights["volume_trend"]},
+            "MA200 Position": {"score": ma200_score, "weight": weights["ma200_position"]},
+            "MA50 Position": {"score": ma50_score, "weight": weights["ma50_position"]},
+        }
+    else:
+        weights = COMPONENT_WEIGHTS_6
+        components = {
+            "Gap Size": {"score": gap_score, "weight": weights["gap_size"]},
+            "Pre-Earnings Trend": {
+                "score": trend_score,
+                "weight": weights["pre_earnings_trend"],
+            },
+            "Volume Trend": {"score": volume_score, "weight": weights["volume_trend"]},
+            "MA200 Position": {"score": ma200_score, "weight": weights["ma200_position"]},
+            "MA50 Position": {"score": ma50_score, "weight": weights["ma50_position"]},
+            "Estimate Revision": {
+                "score": revision_score,
+                "weight": weights["estimate_revision"],
+            },
+        }
 
     composite_score = sum(comp["score"] * comp["weight"] for comp in components.values())
     composite_score = round(composite_score, 1)

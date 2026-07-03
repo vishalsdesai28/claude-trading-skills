@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Good Template</title>
+</head>
+<body>
+<button id="go">Run</button>
+<div id="out"></div>
+<script>
+function handleClick(){ document.getElementById('out').textContent = 'clicked'; }
+document.addEventListener('DOMContentLoaded', function(){
+  document.getElementById('go').addEventListener('click', handleClick);
+  var el = document.getElementById('out');
+  el.onfocus = handleClick;
+  setInterval(handleClick, 5000);
+});
+</script>
+</body>
+</html>

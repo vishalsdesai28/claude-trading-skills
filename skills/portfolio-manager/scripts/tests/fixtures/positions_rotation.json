@@ -1,0 +1,5 @@
+[
+  {"symbol": "KO", "roe_pct": 2.5, "age_days": 40},
+  {"symbol": "PG", "roe_pct": -3.0, "age_days": 30},
+  {"symbol": "AAPL", "roe_pct": 22.0, "age_days": 120}
+]

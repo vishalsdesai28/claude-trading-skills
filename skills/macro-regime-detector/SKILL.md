@@ -35,10 +35,22 @@ Detect structural macro regime transitions using monthly-frequency cross-asset r
 
 4. Provide additional context using `references/historical_regimes.md` when user asks about historical parallels.
 
+5. **Optional — anchor the regime in real macro numbers (FRED):** add `--with-fred`
+   to the command above (or run `fred_series.py` standalone) to attach current
+   yield-curve, inflation, policy-rate, and labor prints + trends to the classified
+   regime. This grounds a named state (e.g. "Contraction") in actual figures — an
+   inverted 10Y-2Y spread, core PCE running hot, unemployment ticking up — rather
+   than cross-asset ratios alone. Needs a free FRED API key; if it is missing the
+   run degrades gracefully and skips grounding.
+
 ## Prerequisites
 
 - **FMP API Key** (required): Set `FMP_API_KEY` environment variable or pass `--api-key`
 - Free tier (250 calls/day) is sufficient (script uses ~10 calls)
+- **FRED API Key** (optional, for `--with-fred` / `fred_series.py`): free key from
+  https://fred.stlouisfed.org/docs/api/api_key.html. Set `FRED_API_KEY` or pass
+  `--fred-api-key` / `--api-key`. Enables real yield-curve/inflation grounding;
+  omitted grounding never blocks the core detector run.
 
 ## 6 Components
 
@@ -87,7 +99,38 @@ Options:
   --api-key KEY       FMP API key (default: $FMP_API_KEY)
   --output-dir DIR    Output directory (default: current directory)
   --days N            Days of history to fetch (default: 600)
+  --with-fred         Anchor the regime in real FRED prints + trends
+  --fred-api-key KEY  FRED API key (default: $FRED_API_KEY)
 ```
+
+## Macro Grounding (FRED)
+
+`scripts/fred_series.py` fetches macro time series from the free FRED API and
+feeds current prints + trends into the regime classification. It exposes a
+`MACRO_SERIES` alias dictionary (`yield_curve`→T10Y2Y, `cpi`→CPIAUCSL,
+`core_pce`→PCEPILFE, `fed_funds_rate`→FEDFUNDS, `unemployment`→UNRATE,
+`ust2y`/`ust10y`/`ust30y`→DGS2/DGS10/DGS30, …); any unknown token is treated as a
+raw FRED series ID. A configurable trailing window (`--look-back-days`, default
+365 for the YoY base) and a per-series row cap (`--max-rows`, default 40) keep
+daily series from flooding context.
+
+```bash
+# Standalone grounding report (JSON + Markdown) to reports/
+export FRED_API_KEY=YOUR_KEY
+uv run python3 skills/macro-regime-detector/scripts/fred_series.py --output-dir reports/
+
+# Pick specific series and a longer window
+uv run python3 skills/macro-regime-detector/scripts/fred_series.py \
+  --series yield_curve cpi core_pce fed_funds_rate --look-back-days 540
+```
+
+Programmatic use: `build_macro_grounding()` returns `{"available": bool,
+"series": {...}, ...}` (graceful `available: False` when `FRED_API_KEY` is
+missing), and `anchor_regime(regime, grounding)` returns a copy of the regime
+dict augmented with a `macro_grounding` block (headline prints, a one-line
+summary, and consistency notes cross-checking the named regime against the real
+yield-curve/inflation numbers). It never mutates its input, so it composes with
+the scorer's `classify_regime` output without touching that module.
 
 ## Resources
 

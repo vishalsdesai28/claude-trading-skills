@@ -2,12 +2,18 @@
 """
 Earnings Trade Analyzer - Main Orchestrator
 
-Analyzes recent post-earnings stocks using a 5-factor scoring system:
+Analyzes recent post-earnings stocks using a weighted scoring system.
+
+5-factor (default):
   1. Gap Size (25%)
   2. Pre-Earnings Trend (30%)
   3. Volume Trend (20%)
   4. MA200 Position (15%)
   5. MA50 Position (10%)
+
+6-factor (with --with-estimate-revision): adds an analyst estimate-revision
+momentum factor (15%, keyless via yfinance) that penalizes candidates facing
+quiet analyst downgrades. See scorer.COMPONENT_WEIGHTS_6.
 
 Scores each stock 0-100 and assigns A/B/C/D grades.
 
@@ -37,6 +43,7 @@ from calculators.ma50_calculator import calculate_ma50_position
 from calculators.ma200_calculator import calculate_ma200_position
 from calculators.pre_earnings_trend_calculator import calculate_pre_earnings_trend
 from calculators.volume_trend_calculator import calculate_volume_trend
+from estimate_revision import compute_revision_factor, fetch_estimate_data
 from fmp_client import ApiCallBudgetExceeded, FMPClient
 from report_generator import generate_json_report, generate_markdown_report
 from scorer import calculate_composite_score
@@ -55,13 +62,17 @@ def normalize_timing(time_value):
         return "unknown"
 
 
-def analyze_stock(daily_prices, earnings_date, timing):
-    """Score a single stock across all 5 factors.
+def analyze_stock(daily_prices, earnings_date, timing, revision_result=None):
+    """Score a single stock across the 5 price/volume factors (plus an optional
+    6th analyst estimate-revision factor).
 
     Args:
         daily_prices: List of price dicts (most-recent-first)
         earnings_date: YYYY-MM-DD string
         timing: 'bmo', 'amc', or 'unknown'
+        revision_result: Optional dict from
+            ``estimate_revision.compute_revision_factor`` (needs a ``score``).
+            When provided, the composite uses the 6-factor weighting.
 
     Returns:
         dict with component results and composite score
@@ -72,15 +83,17 @@ def analyze_stock(daily_prices, earnings_date, timing):
     ma200_result = calculate_ma200_position(daily_prices)
     ma50_result = calculate_ma50_position(daily_prices)
 
+    revision_score = revision_result["score"] if revision_result else None
     composite = calculate_composite_score(
         gap_score=gap_result["score"],
         trend_score=trend_result["score"],
         volume_score=volume_result["score"],
         ma200_score=ma200_result["score"],
         ma50_score=ma50_result["score"],
+        revision_score=revision_score,
     )
 
-    return {
+    result = {
         "gap": gap_result,
         "pre_earnings_trend": trend_result,
         "volume_trend": volume_result,
@@ -88,6 +101,9 @@ def analyze_stock(daily_prices, earnings_date, timing):
         "ma50_position": ma50_result,
         "composite": composite,
     }
+    if revision_result is not None:
+        result["estimate_revision"] = revision_result
+    return result
 
 
 def apply_entry_filter(results):
@@ -142,6 +158,15 @@ def main():
         "--apply-entry-filter",
         action="store_true",
         help="Apply entry quality filter (exclude price < $30, exclude gap>=10%% AND score>=85)",
+    )
+    parser.add_argument(
+        "--with-estimate-revision",
+        action="store_true",
+        help=(
+            "Add the analyst estimate-revision momentum factor as a 6th scoring "
+            "input (keyless via yfinance; no FMP budget impact). Penalizes "
+            "candidates facing quiet analyst downgrades."
+        ),
     )
     parser.add_argument("--top", type=int, default=20, help="Top results to include (default: 20)")
     parser.add_argument(
@@ -294,11 +319,21 @@ def main():
             )
             continue
 
-        # Phase 3: Score all 5 factors
+        # Optional 6th factor: analyst estimate-revision momentum (keyless yfinance)
+        revision_result = None
+        if args.with_estimate_revision:
+            try:
+                revision_result = compute_revision_factor(fetch_estimate_data(symbol))
+            except Exception as e:  # noqa: BLE001 - never let one lookup kill the run
+                print(f" (estimate-revision unavailable: {e})", file=sys.stderr, end="")
+                revision_result = None
+
+        # Phase 3: Score the price/volume factors (+ optional revision factor)
         analysis = analyze_stock(
             daily_prices,
             candidate["earnings_date"],
             candidate["earnings_timing"],
+            revision_result=revision_result,
         )
 
         composite = analysis["composite"]
@@ -336,6 +371,11 @@ def main():
                 "ma50_position": analysis["ma50_position"],
             },
         }
+        if "estimate_revision" in analysis:
+            rev = analysis["estimate_revision"]
+            result["components"]["estimate_revision"] = rev
+            result["revision_score"] = rev.get("score")
+            result["revision_label"] = rev.get("label")
         results.append(result)
         print(
             f" Grade {composite['grade']} (score: {composite['composite_score']:.1f})",
@@ -371,6 +411,7 @@ def main():
         "min_market_cap": args.min_market_cap,
         "min_gap": args.min_gap,
         "entry_filter_applied": args.apply_entry_filter,
+        "estimate_revision_applied": args.with_estimate_revision,
         "api_stats": api_stats,
     }
 

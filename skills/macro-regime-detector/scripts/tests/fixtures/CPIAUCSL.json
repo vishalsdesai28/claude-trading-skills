@@ -1,0 +1,64 @@
+{
+  "meta": {
+    "id": "CPIAUCSL",
+    "title": "Consumer Price Index for All Urban Consumers: All Items",
+    "units": "Index 1982-1984=100",
+    "units_short": "Index 1982-1984=100",
+    "frequency": "Monthly",
+    "seasonal_adjustment_short": "SA"
+  },
+  "observations": [
+    {
+      "date": "2025-06-01",
+      "value": "314.0"
+    },
+    {
+      "date": "2025-07-01",
+      "value": "314.758"
+    },
+    {
+      "date": "2025-08-01",
+      "value": "315.517"
+    },
+    {
+      "date": "2025-09-01",
+      "value": "316.275"
+    },
+    {
+      "date": "2025-10-01",
+      "value": "317.033"
+    },
+    {
+      "date": "2025-11-01",
+      "value": "317.792"
+    },
+    {
+      "date": "2025-12-01",
+      "value": "318.55"
+    },
+    {
+      "date": "2026-01-01",
+      "value": "319.308"
+    },
+    {
+      "date": "2026-02-01",
+      "value": "320.067"
+    },
+    {
+      "date": "2026-03-01",
+      "value": "320.825"
+    },
+    {
+      "date": "2026-04-01",
+      "value": "321.583"
+    },
+    {
+      "date": "2026-05-01",
+      "value": "322.342"
+    },
+    {
+      "date": "2026-06-01",
+      "value": "323.1"
+    }
+  ]
+}

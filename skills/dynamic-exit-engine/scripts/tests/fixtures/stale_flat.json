@@ -1,0 +1,10 @@
+{
+  "_doc": "Entry 100. Price drifts flat (peak only 100.5, +0.5%) for 5 bars, never reaching protect_pct=3 and never hitting the 92 hard stop. With stale_flat_bars=5 the position is cut on the 5th bar (index 4) as opportunity-cost dead weight. With stale_flat_bars=0 (off) it simply holds. Used to assert the stale-flat timeout.",
+  "F": [
+    {"date": "2026-01-02", "close": 100.0},
+    {"date": "2026-01-05", "close": 100.5},
+    {"date": "2026-01-06", "close": 99.8},
+    {"date": "2026-01-07", "close": 100.2},
+    {"date": "2026-01-08", "close": 100.1}
+  ]
+}

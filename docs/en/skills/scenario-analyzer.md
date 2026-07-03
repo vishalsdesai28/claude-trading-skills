@@ -3,7 +3,7 @@ layout: default
 title: "Scenario Analyzer"
 grand_parent: English
 parent: Skill Guides
-nav_order: 44
+nav_order: 51
 lang_peer: /ja/skills/scenario-analyzer/
 permalink: /en/skills/scenario-analyzer/
 generated: true
@@ -66,7 +66,9 @@ Use this skill when:
 
 ## 3. Prerequisites
 
-- **API Keys**: None (uses only WebSearch/WebFetch)
+- **API Keys**: None. WebSearch/WebFetch drive the qualitative analysis; the
+  optional `scripts/polymarket_odds.py` uses the **free, keyless Polymarket
+  Gamma API** to add quantified forward base rates.
 - **MCP Servers**: None
 - **Dependencies**: The scenario-analyst and strategy-reviewer agents must be available via the Task tool
 
@@ -127,6 +129,43 @@ Read references/scenario_playbooks.md
 - `sector_sensitivity_matrix.md`: Event × sector impact-magnitude matrix
 - `scenario_playbooks.md`: Scenario-construction templates and best practices
 
+#### Step 1.4: Fetch Prediction-Market Base Rates (Optional but Recommended)
+
+For monetary-policy, geopolitical, election, macro, or crypto headlines, pull
+**live market-implied probabilities** from Polymarket so the scenario
+probabilities are anchored to a quantified base rate the crowd is actually
+pricing — not just qualitative judgment. This uses the **free, keyless
+Polymarket Gamma API**.
+
+```bash
+# Derive 1-3 topic keywords from the parsed headline (e.g. "Fed rate cut",
+# "US recession 2026", "US government shutdown"). Writes JSON + markdown to reports/.
+python3 skills/scenario-analyzer/scripts/polymarket_odds.py "Fed rate cut" "US recession 2026"
+
+# Offline / reproducible run against a saved Gamma payload:
+python3 skills/scenario-analyzer/scripts/polymarket_odds.py "Fed rate cut" \
+  --fixture skills/scenario-analyzer/scripts/tests/fixtures/gamma_search_fed.json --stdout
+```
+
+The script queries the Gamma `public-search` endpoint, keeps only **open,
+forward-looking** markets (drops resolved/closed and past-dated ones), ranks
+them by traded volume, and parses each market's `outcomePrices` JSON-string
+array into implied probabilities (a "Yes" at 0.76 = **76%**). Each record
+carries the implied probability, traded volume (depth), resolution date, and
+1-week move.
+
+**How to use the base rate:** treat a high-volume market probability as the
+crowd's priced odds, then reconcile it with your Base/Bull/Bear allocation. If
+Polymarket prices a 76% chance of a Fed cut but your Bull case (which assumes a
+cut) sits at 20%, either the market or your scenario is mispriced — document the
+divergence. Deeper markets (higher volume) deserve more weight; treat thin
+markets as weak signals. Polymarket coverage is concentrated in macro,
+political, geopolitical, and crypto events; a specific single-stock headline may
+return no markets, in which case proceed without this input.
+
+If the script reports a topic as unavailable (network error) or returns no
+matches, proceed with the qualitative analysis unchanged.
+
 ---
 
 ### Phase 2: Agent Invocation
@@ -150,9 +189,14 @@ Agent tool:
     ## Reference Information
     [summary of the loaded references]
 
+    ## Prediction-Market Base Rates (if fetched in Step 1.4)
+    [the ranked Polymarket implied probabilities: question, Yes%, volume, resolves]
+
     ## Analysis Requirements
     1. Use WebSearch to collect related news from the past 2 weeks
-    2. Construct 3 scenarios — Base/Bull/Bear (probabilities sum to 100%)
+    2. Construct 3 scenarios — Base/Bull/Bear (probabilities sum to 100%),
+       reconciling the allocation with the Polymarket base rates and flagging
+       any material divergence
     3. Analyze 1st/2nd/3rd-order impacts by sector
     4. Select 3-5 positive- and 3-5 negative-impact stocks (US market only)
     5. Output everything in English
@@ -237,3 +281,7 @@ Generate the final report in the following format and save it to a file.
 - `skills/scenario-analyzer/references/headline_event_patterns.md`
 - `skills/scenario-analyzer/references/scenario_playbooks.md`
 - `skills/scenario-analyzer/references/sector_sensitivity_matrix.md`
+
+**Scripts:**
+
+- `skills/scenario-analyzer/scripts/polymarket_odds.py`

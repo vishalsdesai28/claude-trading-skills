@@ -1,13 +1,16 @@
 ---
 name: finviz-screener
-description: Build and open FinViz screener URLs from natural language requests. Use when user wants to screen stocks, find stocks matching criteria, filter by fundamentals or technicals, or asks to open FinViz with specific conditions. Supports both Japanese and English input (e.g., "高配当で成長している小型株を探したい", "Find oversold large caps with high ROE").
+description: Build and open FinViz screener URLs from natural language requests, or run a keyless yfinance multi-factor boolean screen (no FINVIZ Elite / FMP required). Use when user wants to screen stocks, find stocks matching criteria, filter by fundamentals or technicals, run a screen without a paid data subscription, or asks to open FinViz with specific conditions. Supports both Japanese and English input (e.g., "高配当で成長している小型株を探したい", "Find oversold large caps with high ROE").
 ---
 
 # FinViz Screener
 
 ## Overview
 
-Translate natural-language stock screening requests into FinViz screener filter codes, build the URL, and open it in Chrome. No API key required for public screener; FINVIZ Elite is auto-detected from `$FINVIZ_API_KEY` for enhanced functionality.
+This skill has two complementary paths:
+
+1. **URL builder** (`open_finviz_screener.py`) — translate a natural-language request into FinViz filter codes, build the screener URL, and open it in Chrome. No API key required for the public screener; FINVIZ Elite is auto-detected from `$FINVIZ_API_KEY` for enhanced functionality.
+2. **Keyless yfinance screener** (`yf_boolean_screen.py`) — run an actual multi-factor screen **locally with no API key** (no FINVIZ Elite, no FMP). Composes nested AND/OR boolean filter trees over Yahoo Finance screener fields, runs yfinance predefined screens, and does keyword ticker + news search. Emits a results table (markdown + JSON) to `reports/`. Use this when the user wants results back in-session rather than a browser tab, or has no paid data subscription.
 
 **Key Features:**
 - Natural language → filter code mapping (Japanese + English)
@@ -15,6 +18,8 @@ Translate natural-language stock screening requests into FinViz screener filter 
 - Elite/Public auto-detection (environment variable or explicit flag)
 - Chrome-first browser opening with OS-appropriate fallbacks
 - Strict filter validation to prevent URL injection
+- Keyless multi-factor boolean screening (nested AND/OR trees) via yfinance — no paid subscription
+- yfinance predefined screens and keyword ticker/news search, with markdown + JSON output
 
 ---
 
@@ -174,6 +179,74 @@ After opening the screener, report:
 
 ---
 
+## Keyless yfinance Screening (No API Key)
+
+When the user has no FINVIZ Elite / FMP subscription, or wants results returned
+in-session instead of a browser tab, use `scripts/yf_boolean_screen.py`. It runs
+keyless via yfinance and writes a results table (markdown + JSON) to `reports/`.
+
+**Yahoo screener fields differ from FinViz filter codes.** They are Yahoo field
+names (e.g. `intradaymarketcap`, `percentchange`, `peratio.lasttwelvemonths`,
+`forward_dividend_yield`, `returnonequity.lasttwelvemonths`, `sector`, `region`).
+Load `references/yahoo_screener_fields.md` for the curated field list and the
+valid `sector` / `region` values before composing a query. If a field or value is
+invalid, yfinance raises a clear error naming the offending token.
+
+### Query input: DSL or JSON
+
+Two equivalent ways to express the same nested boolean filter tree:
+
+- **DSL** (`--dsl`): `<field> <op> <value>` leaves joined by `and` / `or`, with
+  parentheses for grouping. `and` binds tighter than `or`. Leaf operators:
+  `gt lt gte lte eq btwn is-in` (aliases: `> < >= <= == in between`). `btwn`
+  takes two values; `is-in` takes a comma-separated value list (no spaces).
+- **JSON** (`--query-json '<json>'` or `--query-file <path>`): flat operand
+  lists identical to what yfinance expects.
+
+```bash
+# DSL: mega-cap US movers with a dividend OR a strong 1-year run
+python3 scripts/yf_boolean_screen.py \
+  --dsl "region eq us and intradaymarketcap gte 2e10 and (forward_dividend_yield gte 0.03 or fiftytwowkpercentchange gt 0.25)" \
+  --sort-field percentchange --count 25 --output-dir reports/
+
+# JSON: value screen with a sector membership filter and a P/E band
+python3 scripts/yf_boolean_screen.py \
+  --query-json '{"operator":"and","operands":[
+     {"operator":"eq","operands":["region","us"]},
+     {"operator":"is-in","operands":["sector","Technology","Healthcare"]},
+     {"operator":"btwn","operands":["peratio.lasttwelvemonths",5,20]},
+     {"operator":"gt","operands":["returnonequity.lasttwelvemonths",0.15]}]}' \
+  --sort-field intradaymarketcap --output-dir reports/
+```
+
+### Predefined screens and keyword search
+
+```bash
+# List Yahoo's built-in predefined screens
+python3 scripts/yf_boolean_screen.py --list-predefined
+
+# Run one (e.g. day_gainers, undervalued_growth_stocks, most_actives)
+python3 scripts/yf_boolean_screen.py --predefined day_gainers --count 25 --output-dir reports/
+
+# Keyword ticker + related-news search
+python3 scripts/yf_boolean_screen.py --search "electric vehicles" --output-dir reports/
+```
+
+**Script arguments:**
+- One of `--dsl` / `--query-json` / `--query-file` / `--predefined` / `--search` / `--list-predefined` (mutually exclusive, required).
+- `--sort-field` (default `intradaymarketcap`), `--sort-asc` (default descending).
+- `--count` — max results, capped at 250 (default 25).
+- `--columns` — comma-separated output columns (default: a curated set).
+- `--news-count` — news articles for `--search` (default 5).
+- `--title`, `--output-dir` (default `reports/`), `--output-prefix` (default `yf_screen`).
+- `--no-report` — print the JSON summary only; skip writing report files.
+
+**Note:** Yahoo's universe spans global exchanges; add `region eq us` to a
+boolean query to restrict to US-listed names. yfinance is imported lazily, so the
+DSL parser / spec validator / table formatter carry no network dependency.
+
+---
+
 ## Usage Recipes
 
 Real-world screening patterns distilled from repeated use. Each recipe includes a starter filter set, recommended view, and tips for iterative refinement.
@@ -315,4 +388,6 @@ Screening works best as a dialogue, not a one-shot query:
 ## Resources
 
 - `references/finviz_screener_filters.md` — Complete filter code reference with natural language keywords (includes industry code examples; full 142-code list is in the Industry Codes section)
+- `references/yahoo_screener_fields.md` — Curated Yahoo Finance screener field names and valid sector/region values for the keyless yfinance path
 - `scripts/open_finviz_screener.py` — URL builder and Chrome opener
+- `scripts/yf_boolean_screen.py` — Keyless yfinance multi-factor boolean screener (DSL/JSON), predefined screens, and ticker/news search; writes markdown + JSON to `reports/`
