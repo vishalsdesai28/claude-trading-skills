@@ -97,8 +97,20 @@ def test_build_records_carries_option_fields(tmp_path, monkeypatch):
                 "instrument": "option",
                 "option_strategy": "call_debit_spread",
                 "option_legs": [
-                    {"side": "buy", "right": "call", "strike": 120, "expiry": "2026-07-18", "ratio": 1},
-                    {"side": "sell", "right": "call", "strike": 130, "expiry": "2026-07-18", "ratio": 1},
+                    {
+                        "side": "buy",
+                        "right": "call",
+                        "strike": 120,
+                        "expiry": "2026-07-18",
+                        "ratio": 1,
+                    },
+                    {
+                        "side": "sell",
+                        "right": "call",
+                        "strike": 130,
+                        "expiry": "2026-07-18",
+                        "ratio": 1,
+                    },
                 ],
                 "net_premium": 3.50,
                 "claim_date": "2026-06-22",

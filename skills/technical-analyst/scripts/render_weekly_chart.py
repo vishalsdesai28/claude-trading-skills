@@ -22,6 +22,7 @@ Run with uv so deps resolve without touching system Python:
 ponytail: single script = the consistency contract. Do not inline matplotlib
 in the skill; call this instead.
 """
+
 import argparse
 import json
 import subprocess
@@ -49,9 +50,9 @@ EXT_PALETTE = ["#ff9800", "#00bcd4", "#e040fb", "#7e57c2", "#8d6e63"]
 # window, and the MA periods can't be mismatched (daily candles with weekly MAs
 # on a 5y window = an unreadable ~1250-bar chart). Explicit flags override.
 HORIZON = {
-    "swing":    ("1d",  "1y",  "10,20,50,200"),   # days-to-weeks: execution chart
-    "position": ("1wk", "5y",  "20,30,50,200"),   # weeks-to-months: context chart
-    "longterm": ("1mo", "max", "10,20,50"),        # months-to-years: secular chart
+    "swing": ("1d", "1y", "10,20,50,200"),  # days-to-weeks: execution chart
+    "position": ("1wk", "5y", "20,30,50,200"),  # weeks-to-months: context chart
+    "longterm": ("1mo", "max", "10,20,50"),  # months-to-years: secular chart
 }
 # interval -> filename label, so a daily render isn't mislabeled "weekly".
 INTERVAL_LABEL = {"1d": "daily", "1wk": "weekly", "1mo": "monthly"}
@@ -64,8 +65,10 @@ INTERVAL_LABEL = {"1d": "daily", "1wk": "weekly", "1mo": "monthly"}
 FETCH_ORDER = [("1y", 52), ("2y", 104), ("5y", 260), ("10y", 523)]
 DISPLAY_WEEKS = {"6mo": 26, "ytd": 52, "1y": 52, "2y": 104, "5y": 260, "10y": 520, "max": 523}
 DISPLAY_OFFSET = {
-    "6mo": pd.DateOffset(months=6), "1y": pd.DateOffset(years=1),
-    "2y": pd.DateOffset(years=2), "5y": pd.DateOffset(years=5),
+    "6mo": pd.DateOffset(months=6),
+    "1y": pd.DateOffset(years=1),
+    "2y": pd.DateOffset(years=2),
+    "5y": pd.DateOffset(years=5),
     "10y": pd.DateOffset(years=10),
 }
 
@@ -91,17 +94,22 @@ def choose_fetch_range(display_range, periods):
 def fetch(symbol, rng, interval):
     """Fetch OHLCV from the CLI (stdout only; warnings go to stderr)."""
     out = subprocess.run(
-        ["yahoo-finance-pp-cli", "chart", symbol,
-         "--interval", interval, "--range", rng, "--json"],
-        capture_output=True, text=True,
+        ["yahoo-finance-pp-cli", "chart", symbol, "--interval", interval, "--range", rng, "--json"],
+        capture_output=True,
+        text=True,
     )
     if out.returncode != 0:
         sys.exit(f"chart fetch failed for {symbol}: {out.stderr.strip()}")
     result = json.loads(out.stdout)["results"]["chart"]["result"][0]
     q = result["indicators"]["quote"][0]
     df = pd.DataFrame(
-        {"Open": q["open"], "High": q["high"], "Low": q["low"],
-         "Close": q["close"], "Volume": q["volume"]},
+        {
+            "Open": q["open"],
+            "High": q["high"],
+            "Low": q["low"],
+            "Close": q["close"],
+            "Volume": q["volume"],
+        },
         index=pd.to_datetime(result["timestamp"], unit="s"),
     ).dropna()
     if df.empty:
@@ -134,34 +142,56 @@ def trim(df, overlays, display_range):
     overlays2 = [(n, s[mask], c, st) for n, s, c, st in overlays]
     for n, s, _, _ in overlays2:
         if len(s) and bool(pd.isna(s.iloc[0])):
-            print(f"note: {n} not fully covered at left edge (insufficient history)",
-                  file=sys.stderr)
+            print(
+                f"note: {n} not fully covered at left edge (insufficient history)", file=sys.stderr
+            )
     return df2, overlays2
 
 
 def render(df, overlays, symbol, interval, out_dir):
-    addplots = [mpf.make_addplot(s, color=c, width=1.0, linestyle=st)
-                for _, s, c, st in overlays]
+    addplots = [mpf.make_addplot(s, color=c, width=1.0, linestyle=st) for _, s, c, st in overlays]
     legend = [(n, c) for n, _, c, _ in overlays]
 
     mc = mpf.make_marketcolors(
-        up=UP, down=DOWN, edge="inherit", wick="inherit",
-        volume={"up": UP, "down": DOWN})
+        up=UP, down=DOWN, edge="inherit", wick="inherit", volume={"up": UP, "down": DOWN}
+    )
     style = mpf.make_mpf_style(
-        base_mpf_style="nightclouds", marketcolors=mc,
-        facecolor=FACE, figcolor=FACE, edgecolor=GRID, gridcolor=GRID,
-        gridstyle="-", y_on_right=True)
+        base_mpf_style="nightclouds",
+        marketcolors=mc,
+        facecolor=FACE,
+        figcolor=FACE,
+        edgecolor=GRID,
+        gridcolor=GRID,
+        gridstyle="-",
+        y_on_right=True,
+    )
 
     fig, axes = mpf.plot(
-        df, type="candle", style=style, volume=True, addplot=addplots,
-        returnfig=True, figsize=(16, 9), datetime_format="%Y", xrotation=0,
-        title=f"\n{symbol.upper()} · {interval.upper()}", tight_layout=True)
+        df,
+        type="candle",
+        style=style,
+        volume=True,
+        addplot=addplots,
+        returnfig=True,
+        figsize=(16, 9),
+        datetime_format="%Y",
+        xrotation=0,
+        title=f"\n{symbol.upper()} · {interval.upper()}",
+        tight_layout=True,
+    )
 
     if legend:
         handles = [Line2D([0], [0], color=c, lw=2, label=n) for n, c in legend]
-        axes[0].legend(handles=handles, loc="upper left", ncol=len(handles),
-                       facecolor=FACE, edgecolor=FACE, labelcolor="linecolor",
-                       fontsize=9, framealpha=0)
+        axes[0].legend(
+            handles=handles,
+            loc="upper left",
+            ncol=len(handles),
+            facecolor=FACE,
+            edgecolor=FACE,
+            labelcolor="linecolor",
+            fontsize=9,
+            framealpha=0,
+        )
 
     Path(out_dir).mkdir(parents=True, exist_ok=True)
     date = datetime.now(timezone.utc).strftime("%Y-%m-%d")
@@ -176,18 +206,25 @@ def self_check():
     """Offline check: color map, fetch-range padding, full-MA trim, render."""
     assert parse_periods("20,30,50,200") == [20, 30, 50, 200]
     assert parse_periods("") == []
-    assert color_for(20, 0) == SMA_COLORS[20]           # pinned period
-    assert color_for(9, 0) == EXT_PALETTE[0]            # unmapped -> palette
-    assert color_for(9, 5) == EXT_PALETTE[0]            # 5 % len(palette) wraps to [0]
+    assert color_for(20, 0) == SMA_COLORS[20]  # pinned period
+    assert color_for(9, 0) == EXT_PALETTE[0]  # unmapped -> palette
+    assert color_for(9, 5) == EXT_PALETTE[0]  # 5 % len(palette) wraps to [0]
     # 5y display + SMA200 must pad the fetch beyond 5y so SMA200 is full at left edge
     assert choose_fetch_range("5y", [20, 30, 50, 200]) == "10y"
     assert choose_fetch_range("1y", [200]) == "5y"
     # synthetic upward-drifting OHLCV, 460 weekly bars (>= 5y display + SMA200)
     idx = pd.date_range("2017-01-02", periods=460, freq="W-MON")
     base = pd.Series(range(460), index=idx, dtype=float) + 100
-    df = pd.DataFrame({
-        "Open": base, "High": base + 3, "Low": base - 3,
-        "Close": base + 1, "Volume": [1_000_000] * 460}, index=idx)
+    df = pd.DataFrame(
+        {
+            "Open": base,
+            "High": base + 3,
+            "Low": base - 3,
+            "Close": base + 1,
+            "Volume": [1_000_000] * 460,
+        },
+        index=idx,
+    )
     overlays = compute_overlays(df, [20, 30, 50, 200], [])
     df_disp, ov_disp = trim(df, overlays, "5y")
     sma200 = next(s for n, s, _, _ in ov_disp if n == "SMA200")
@@ -196,6 +233,7 @@ def self_check():
     assert INTERVAL_LABEL["1d"] == "daily" and INTERVAL_LABEL["1wk"] == "weekly"
     assert HORIZON["swing"][0] == "1d" and HORIZON["position"][0] == "1wk"
     import tempfile
+
     with tempfile.TemporaryDirectory() as td:
         png = render(df_disp, ov_disp, "TEST", "1wk", td)
         assert png.exists() and png.stat().st_size > 5000, "render produced no image"
@@ -208,15 +246,22 @@ def self_check():
 def main():
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("symbol", nargs="?", help="ticker, e.g. MSFT")
-    ap.add_argument("--horizon", choices=sorted(HORIZON),
-                    help="preset timeframe bundle: swing=daily/1y, position=weekly/5y, "
-                         "longterm=monthly/max. Explicit --interval/--range/--sma override.")
+    ap.add_argument(
+        "--horizon",
+        choices=sorted(HORIZON),
+        help="preset timeframe bundle: swing=daily/1y, position=weekly/5y, "
+        "longterm=monthly/max. Explicit --interval/--range/--sma override.",
+    )
     ap.add_argument("--sma", default=None, help="comma-separated SMA periods")
     ap.add_argument("--ema", default="", help="comma-separated EMA periods (dashed)")
     ap.add_argument("--interval", default=None)
-    ap.add_argument("--range", dest="rng", default=None,
-                    help="DISPLAY window (6mo/ytd/1y/2y/5y/10y/max); more history is "
-                         "fetched behind the scenes so long MAs are fully drawn")
+    ap.add_argument(
+        "--range",
+        dest="rng",
+        default=None,
+        help="DISPLAY window (6mo/ytd/1y/2y/5y/10y/max); more history is "
+        "fetched behind the scenes so long MAs are fully drawn",
+    )
     ap.add_argument("--out", default="reports")
     ap.add_argument("--self-check", action="store_true", help="offline render test, no network")
     a = ap.parse_args()

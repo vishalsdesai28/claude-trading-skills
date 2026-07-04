@@ -125,6 +125,11 @@ skips = [
     "B311",  # random (used for non-security skill selection)
     "B404",  # import subprocess (needed for test runner)
     "B603",  # subprocess without shell=true (intentionally safe pattern)
+    "B105",  # false positives on domain term "pass" (gate-result key); real secrets covered by detect-secrets
+    "B112",  # try-except-continue: best-effort per-item parsing, malformed entries skipped
+    "B314",  # xml.etree parse of trusted HTTPS feeds (GDELT/Reddit/YouTube RSS); skills are stdlib-only
+    "B405",  # xml.etree import (same trusted-feed rationale as B314); defusedxml intentionally not added
+    "B607",  # partial exec path for known local tools (claude/uv/yt-dlp); also nosec'd per-line
 ]
 
 [tool.codespell]

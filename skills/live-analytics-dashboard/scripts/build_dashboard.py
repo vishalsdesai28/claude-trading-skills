@@ -672,7 +672,7 @@ def build_fastapi(
     (out / "server" / "requirements.txt").write_text(render_requirements(), encoding="utf-8")
     start = out / "start.sh"
     start.write_text(render_start_sh(port), encoding="utf-8")
-    os.chmod(start, 0o755)
+    os.chmod(start, 0o700)  # owner-only; local launcher, no need for group/other exec
 
     # Copy the pure-python builder + CSP gate so the server can import them.
     here = Path(__file__).resolve().parent

@@ -485,10 +485,7 @@ def fetch_cboe(ticker: str, timeout: float = 12.0):
 
     sym = underlying_for(ticker)
     url = f"https://cdn.cboe.com/api/global/delayed_quotes/options/{sym}.json"
-    try:
-        ctx = ssl.create_default_context()
-    except Exception:
-        ctx = ssl._create_unverified_context()
+    ctx = ssl.create_default_context()  # verified TLS; do not fall back to unverified
     req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
     try:
         with urllib.request.urlopen(req, timeout=timeout, context=ctx) as resp:

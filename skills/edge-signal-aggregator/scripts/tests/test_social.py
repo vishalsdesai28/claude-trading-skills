@@ -12,8 +12,14 @@ from aggregate_signals import (
 SOCIAL_DOC = {
     "_source_file": "reports/edge_social_aggregator_x.json",
     "signals": [
-        {"ticker": "NVDA", "direction": "long", "social_conviction": 0.7,
-         "title": "NVDA social", "time_horizon": "weekly", "timestamp": "2026-06-22"},
+        {
+            "ticker": "NVDA",
+            "direction": "long",
+            "social_conviction": 0.7,
+            "title": "NVDA social",
+            "time_horizon": "weekly",
+            "timestamp": "2026-06-22",
+        },
     ],
 }
 
@@ -35,8 +41,14 @@ def test_extract_signals_from_social():
 
 def test_aggregate_includes_social_source():
     res = aggregate_signals(
-        edge_candidates=[], edge_concepts=[], themes=[], sectors=[],
-        institutional=[], hints=[], config=deepcopy(DEFAULT_CONFIG), social=[SOCIAL_DOC],
+        edge_candidates=[],
+        edge_concepts=[],
+        themes=[],
+        sectors=[],
+        institutional=[],
+        hints=[],
+        config=deepcopy(DEFAULT_CONFIG),
+        social=[SOCIAL_DOC],
     )
     assert res["summary"]["total_input_signals"] == 1
     assert any("NVDA" in s["tickers"] for s in res["ranked_signals"])
