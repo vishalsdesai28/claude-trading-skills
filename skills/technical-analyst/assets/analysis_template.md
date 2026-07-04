@@ -5,7 +5,7 @@
 **Analysis Date**: [YYYY-MM-DD]
 **Analyst**: Claude Technical Analyst
 **Data Source**: [User-provided image | Auto-generated from yahoo-finance-pp-cli]
-**Chart**: ![chart](./[SYMBOL]_weekly_[YYYY-MM-DD].png)  <!-- ticker path only; omit for user images -->
+**Chart**: ![chart](./[SYMBOL]_[daily|weekly|monthly]_[YYYY-MM-DD].png)  <!-- ticker path only; label matches the horizon/interval; omit for user images -->
 
 ---
 

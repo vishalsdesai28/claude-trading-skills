@@ -39,17 +39,33 @@ This skill generates markdown analysis reports saved to the `reports/` directory
 
 ## Analysis Workflow
 
-### Step 0: Determine Input Path
+### Step 0: Determine Input Path and Horizon
+
+Match the chart timeframe to the user's intended holding period — a swing setup and a
+long-term thesis look at different charts, and the same timeframe plays a different role
+depending on horizon. Pick the horizon from what the user asked for; when unstated, default
+to `position` (weekly) and say so.
+
+| Horizon | Hold | Execution chart | Preset |
+|---|---|---|---|
+| `swing` | days–weeks | daily (+ weekly for context) | `--horizon swing` (daily, 1y, SMA 10/20/50/200) |
+| `position` | weeks–months | weekly (+ monthly for context) | `--horizon position` (weekly, 5y, SMA 20/30/50/200) |
+| `longterm` | months–years | monthly | `--horizon longterm` (monthly, max, SMA 10/20/50) |
+
+For a **swing** request, render BOTH the weekly (context: trend, major S/R) and the daily
+(execution: entry trigger, stop, breakout volume) and analyze the daily as the trade
+timeframe. Weekly alone vets a candidate; it does not time the trade.
 
 - **Image provided** → skip to Step 1 (vision analysis of the user's image).
-- **Ticker only, no image** → auto-generate the chart first, then analyze:
+- **Ticker only, no image** → auto-generate the chart(s) first, then analyze:
   1. Render the chart (also fetches the data):
      ```
-     uv run scripts/render_weekly_chart.py <TICKER> --sma 20,30,50,200 --range 5y --out reports/
+     uv run scripts/render_weekly_chart.py <TICKER> --horizon <swing|position|longterm> --out reports/
      ```
-     Adjust `--sma`/`--ema` to the indicators the analysis needs (the visual style is fixed;
-     only the indicator set varies). Use `--range 10y` or `max` when more history is wanted —
-     `5y` is the floor for the 200-week SMA.
+     The `--horizon` preset bundles interval + display range + SMA set so they can't be
+     mismatched. Explicit `--interval` / `--range` / `--sma` / `--ema` override the preset
+     for custom needs (the visual style is fixed; only the timeframe and indicators vary).
+     `5y` is the floor for a full 200-week SMA on the weekly preset.
   2. If the script exits non-zero (unknown ticker, no bars), tell the user and ask for an image
      instead. Do not fabricate levels.
   3. On the ticker path, derive every level and MA value from the fetched OHLCV numbers — they
@@ -276,6 +292,6 @@ Structured template for technical analysis reports with all required sections.
 
 ### scripts/render_weekly_chart.py
 
-Renders a deterministic TradingView-style weekly candlestick chart (dark theme, pinned SMA colors — 20=yellow, 30=white, 50=green, 200=red — volume panel) from yahoo-finance-pp-cli data. The visual style is fixed run to run; only the indicator set varies via `--sma`/`--ema`.
+Renders a deterministic TradingView-style candlestick chart (dark theme, pinned SMA colors — 20=yellow, 30=white, 50=green, 200=red — volume panel) from yahoo-finance-pp-cli data. The visual style is fixed run to run; the timeframe and indicator set vary. `--horizon swing|position|longterm` presets the interval (daily/weekly/monthly), display range, and SMA set together; the output PNG is labeled by interval (`<SYM>_daily_`/`_weekly_`/`_monthly_<date>.png`). Despite the filename, it renders any timeframe — explicit `--interval`/`--range`/`--sma`/`--ema` override the preset.
 
-**Usage** (ticker path, Step 0): `uv run scripts/render_weekly_chart.py <TICKER> --sma 20,30,50,200 --range 5y --out reports/`. Run `--self-check` for an offline render test.
+**Usage** (ticker path, Step 0): `uv run scripts/render_weekly_chart.py <TICKER> --horizon position --out reports/` (or `--horizon swing` for daily). Run `--self-check` for an offline render test.

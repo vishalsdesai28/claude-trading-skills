@@ -45,9 +45,22 @@ SMA_COLORS = {20: "#f5d020", 30: "#ffffff", 50: "#26a69a", 200: "#ef5350"}
 # periods not in the map get a fixed palette, assigned deterministically by order
 EXT_PALETTE = ["#ff9800", "#00bcd4", "#e040fb", "#7e57c2", "#8d6e63"]
 
+# horizon -> (interval, display range, SMA set). Bundled so the timeframe, the
+# window, and the MA periods can't be mismatched (daily candles with weekly MAs
+# on a 5y window = an unreadable ~1250-bar chart). Explicit flags override.
+HORIZON = {
+    "swing":    ("1d",  "1y",  "10,20,50,200"),   # days-to-weeks: execution chart
+    "position": ("1wk", "5y",  "20,30,50,200"),   # weeks-to-months: context chart
+    "longterm": ("1mo", "max", "10,20,50"),        # months-to-years: secular chart
+}
+# interval -> filename label, so a daily render isn't mislabeled "weekly".
+INTERVAL_LABEL = {"1d": "daily", "1wk": "weekly", "1mo": "monthly"}
+
 # Approx weekly bars per CLI range bucket. NOTE: this source's "max" caps low
 # (~163 wk for MSFT) — smaller than 10y — so we never use it to pad; 10y is the
 # largest reliable bucket. ponytail: hardcoded because the source is quirky.
+# Units are weeks; for non-weekly intervals this just over-fetches (harmless —
+# MAs stay fully covered at the left edge), so we don't special-case per interval.
 FETCH_ORDER = [("1y", 52), ("2y", 104), ("5y", 260), ("10y", 523)]
 DISPLAY_WEEKS = {"6mo": 26, "ytd": 52, "1y": 52, "2y": 104, "5y": 260, "10y": 520, "max": 523}
 DISPLAY_OFFSET = {
@@ -152,7 +165,8 @@ def render(df, overlays, symbol, interval, out_dir):
 
     Path(out_dir).mkdir(parents=True, exist_ok=True)
     date = datetime.now(timezone.utc).strftime("%Y-%m-%d")
-    png = Path(out_dir) / f"{symbol.upper()}_weekly_{date}.png"
+    label = INTERVAL_LABEL.get(interval, interval)
+    png = Path(out_dir) / f"{symbol.upper()}_{label}_{date}.png"
     fig.savefig(png, dpi=110, facecolor=FACE)
     plt.close(fig)
     return png
@@ -178,20 +192,29 @@ def self_check():
     df_disp, ov_disp = trim(df, overlays, "5y")
     sma200 = next(s for n, s, _, _ in ov_disp if n == "SMA200")
     assert not bool(pd.isna(sma200.iloc[0])), "SMA200 should be full at the left edge after padding"
+    # filename label must track the interval so a daily render isn't called "weekly"
+    assert INTERVAL_LABEL["1d"] == "daily" and INTERVAL_LABEL["1wk"] == "weekly"
+    assert HORIZON["swing"][0] == "1d" and HORIZON["position"][0] == "1wk"
     import tempfile
     with tempfile.TemporaryDirectory() as td:
         png = render(df_disp, ov_disp, "TEST", "1wk", td)
         assert png.exists() and png.stat().st_size > 5000, "render produced no image"
+        assert "_weekly_" in png.name, "weekly render mislabeled"
+        png_d = render(df_disp, ov_disp, "TEST", "1d", td)
+        assert "_daily_" in png_d.name, "daily render mislabeled as weekly"
     print("self-check OK")
 
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("symbol", nargs="?", help="ticker, e.g. MSFT")
-    ap.add_argument("--sma", default="20,30,50,200", help="comma-separated SMA periods")
+    ap.add_argument("--horizon", choices=sorted(HORIZON),
+                    help="preset timeframe bundle: swing=daily/1y, position=weekly/5y, "
+                         "longterm=monthly/max. Explicit --interval/--range/--sma override.")
+    ap.add_argument("--sma", default=None, help="comma-separated SMA periods")
     ap.add_argument("--ema", default="", help="comma-separated EMA periods (dashed)")
-    ap.add_argument("--interval", default="1wk")
-    ap.add_argument("--range", dest="rng", default="5y",
+    ap.add_argument("--interval", default=None)
+    ap.add_argument("--range", dest="rng", default=None,
                     help="DISPLAY window (6mo/ytd/1y/2y/5y/10y/max); more history is "
                          "fetched behind the scenes so long MAs are fully drawn")
     ap.add_argument("--out", default="reports")
@@ -204,12 +227,18 @@ def main():
     if not a.symbol:
         ap.error("symbol is required (or pass --self-check)")
 
-    sma, ema = parse_periods(a.sma), parse_periods(a.ema)
-    fetch_range = choose_fetch_range(a.rng, sma + ema)
-    df_full = fetch(a.symbol, fetch_range, a.interval)
+    # horizon supplies defaults; any explicit flag wins; weekly if neither given.
+    h_int, h_rng, h_sma = HORIZON.get(a.horizon, (None, None, None))
+    interval = a.interval or h_int or "1wk"
+    rng = a.rng or h_rng or "5y"
+    sma_spec = a.sma if a.sma is not None else (h_sma or "20,30,50,200")
+
+    sma, ema = parse_periods(sma_spec), parse_periods(a.ema)
+    fetch_range = choose_fetch_range(rng, sma + ema)
+    df_full = fetch(a.symbol, fetch_range, interval)
     overlays = compute_overlays(df_full, sma, ema)
-    df_disp, ov_disp = trim(df_full, overlays, a.rng)
-    print(render(df_disp, ov_disp, a.symbol, a.interval, a.out))
+    df_disp, ov_disp = trim(df_full, overlays, rng)
+    print(render(df_disp, ov_disp, a.symbol, interval, a.out))
 
 
 if __name__ == "__main__":
