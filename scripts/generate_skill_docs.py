@@ -1326,7 +1326,9 @@ def _check_drift(
     (generated:false/absent/HAND_WRITTEN) are never content-compared and never
     reverted.
     """
-    nav_orders = _compute_nav_orders(skill_dirs, overwrite=False)
+    # Nav order is a position in the FULL alphabetical skill list — compute it
+    # from the whole skills dir even when the check is filtered to one skill.
+    nav_orders = _compute_nav_orders(sorted(args.skills_dir.iterdir()), overwrite=False)
     drift = False
     for d in skill_dirs:
         if not d.is_dir() or not (d / "SKILL.md").exists():
@@ -1449,8 +1451,10 @@ def main(argv: list[str] | None = None) -> int:
     en_dir.mkdir(parents=True, exist_ok=True)
     ja_dir.mkdir(parents=True, exist_ok=True)
 
-    # Assign nav_orders (shared with --check via _compute_nav_orders).
-    nav_orders = _compute_nav_orders(skill_dirs, args.overwrite)
+    # Assign nav_orders (shared with --check via _compute_nav_orders). Always
+    # computed over the FULL skills dir so a --skill run writes the same
+    # nav_order the unfiltered --check gate expects.
+    nav_orders = _compute_nav_orders(sorted(args.skills_dir.iterdir()), args.overwrite)
 
     generated_en = 0
     generated_ja = 0

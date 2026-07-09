@@ -3,7 +3,7 @@ layout: default
 title: "Short Squeeze Radar"
 grand_parent: 日本語
 parent: スキルガイド
-nav_order: 53
+nav_order: 55
 lang_peer: /en/skills/short-squeeze-radar/
 permalink: /ja/skills/short-squeeze-radar/
 generated: true
@@ -17,6 +17,7 @@ Rank US equities by short-squeeze potential using FREE FINRA data (no API key). 
 
 <span class="badge badge-free">API不要</span>
 
+[スキルパッケージをダウンロード (.skill)](https://github.com/tradermonty/claude-trading-skills/raw/main/skill-packages/short-squeeze-radar.skill){: .btn .btn-primary .fs-5 .mb-4 .mb-md-0 .mr-2 }
 [GitHubでソースを見る](https://github.com/tradermonty/claude-trading-skills/tree/main/skills/short-squeeze-radar){: .btn .fs-5 .mb-4 .mb-md-0 }
 
 > **Note:** This page has not yet been translated into Japanese.

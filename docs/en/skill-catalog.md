@@ -54,6 +54,8 @@ A comprehensive catalog of all 61 Claude Trading Skills organized by category. B
 | **FTD Detector** | Detects Follow-Through Day signals for market bottom confirmation using William O'Neil's methodology. Dual-index tracking with quality scoring (0-100) | <span class="badge badge-api">FMP Required</span> |
 | **Institutional Flow Tracker** | Tracks institutional ownership changes using 13F SEC filings. Tier-based quality framework weights superinvestors (Berkshire, Baupost) higher than index funds | <span class="badge badge-api">FMP Required</span> |
 | **[Short-Squeeze Radar]({{ '/en/skills/short-squeeze-radar/' | relative_url }})** | Ranks US equities by short-squeeze potential from free FINRA data: Reg SHO daily short-volume inflection plus optional bi-monthly short interest for days-to-cover, classifying crowded-short / neutral / low-pressure names | <span class="badge badge-free">No API</span> |
+| **[Trend Reclaim Screener]({{ '/en/skills/trend-reclaim-screener/' | relative_url }})** | After-hours screener for long-side SMA50 reclaim setups — stocks that pulled back below the 50-day average, reset, and recently re-established above it. 5-factor weighted grade (reclaim quality / momentum / structure / volume / trend alignment) ranks top-3 picks with next-open entry, stop, and T1 plan levels. Keyless Yahoo Finance data | <span class="badge badge-free">No API</span> |
+| **[Swing Setup Screener]({{ '/en/skills/swing-setup-screener/' | relative_url }})** | Seven-in-one EOD screener: swing-trend longs/shorts (SMA50/200 + trigger status), 52-week-high leaders with SMA20 pullback plans, high-ATR% names, and three next-session RVOL watchlists (in-play / unusual-volume quadrant / weakness). A-D grades, documented weights, hard timing contract (last completed session only). Keyless Yahoo Finance data | <span class="badge badge-free">No API</span> |
 
 ---
 
@@ -87,6 +89,7 @@ A comprehensive catalog of all 61 Claude Trading Skills organized by category. B
 | **[Stockbee 20% Study]({{ '/en/skills/stockbee-20pct-study/' | relative_url }})** | Builds a daily +20%/-20% mover model book, classifies catalyst and chart context, updates forward outcomes, and mines cohorts for research prompts. Study workflow only — not a buy/sell signal service | <span class="badge badge-api">FMP Required</span> <span class="badge badge-optional">Local JSON Optional</span> |
 | **Options Strategy Advisor** | Educational options tool using Black-Scholes pricing. Calculates Greeks (Delta, Gamma, Theta, Vega, Rho), supports 17+ strategies, P/L simulation | <span class="badge badge-optional">FMP Optional</span> |
 | **Pair Trade Screener** | Statistical arbitrage via cointegration testing. Calculates hedge ratios, mean-reversion speed (half-life), and z-score entry/exit signals | <span class="badge badge-api">FMP Required</span> |
+| **[Index Futures Weekly Income]({{ '/en/skills/index-futures-weekly-income/' | relative_url }})** | Week-ahead ES/NQ futures and options signals for weekly income. Regime-gated (trend + VIX/VXN): long-only pullback/breakout futures setups (1.5R) plus put-credit-spread income structures, backtested 2010-2026 on Yahoo Finance data with stand-aside calls in downtrends and stressed vol | <span class="badge badge-free">No API</span> |
 | **Stanley Druckenmiller Investment** | Encodes Druckenmiller's macro positioning philosophy: liquidity analysis, asymmetric risk/reward, conviction sizing, and loss-cutting discipline | <span class="badge badge-free">No API</span> |
 | **Strategy Pivot Designer** | Detects backtest stagnation and generates structurally different pivot proposals. 4 deterministic triggers, 3 pivot techniques across 8 strategy archetypes | <span class="badge badge-free">No API</span> |
 | **[Dealer Gamma Analyzer]({{ '/en/skills/dealer-gamma-analyzer/' | relative_url }})** | Quantifies dealer options gamma (GEX) from free ~15-min delayed CBOE data: signed gamma per strike, call/put walls as S/R levels, gamma-flip strike, max pain, and positive/negative-gamma regime classification | <span class="badge badge-free">No API</span> |
@@ -98,6 +101,7 @@ A comprehensive catalog of all 61 Claude Trading Skills organized by category. B
 | Skill | Description | API Requirements |
 |-------|-------------|-----------------|
 | **Portfolio Manager** | Portfolio analysis with Alpaca MCP Server integration. Asset allocation, sector diversification, risk metrics, HOLD/ADD/TRIM/SELL recommendations, rebalancing plans | <span class="badge badge-api">Alpaca Required</span> |
+| **[Momentum DCA Bot]({{ '/en/skills/momentum-dca-bot/' | relative_url }})** | Fully mechanical daily momentum DCA sleeve: keyless Yahoo momentum-pullback screen, $300/day fixed-notional buys via Alpaca (paper by default) gated on SPY > 50DMA, half-position profit booking at +20%, full exit on 50DMA break or 15% trailing stop, append-only trade log | <span class="badge badge-api">Alpaca Required</span> <span class="badge badge-optional">FINVIZ Optional</span> |
 | **[Trader Memory Core]({{ '/en/skills/trader-memory-core/' | relative_url }})** | Persistent thesis lifecycle tracker: register screener outputs as IDEA, manage state transitions through ENTRY_READY → ACTIVE → CLOSED, attach position sizing, schedule reviews, and generate postmortem reports with MAE/MFE | <span class="badge badge-optional">FMP Optional</span> |
 | **[Trade Performance Coach]({{ '/en/skills/trade-performance-coach/' | relative_url }})** | Post-trade coach: reviews closed trades, partial exits, and monthly aggregates across 5 axes (process, risk, execution, behavior patterns, review quality), emits OK/WARN/REVIEW_REQUIRED/RULE_VIOLATION/COOL_DOWN verdict and next-session operating rules with human decision gate. Beta. | <span class="badge badge-free">No API</span> |
 | **[Weekly Performance Digest]({{ '/en/skills/weekly-performance-digest/' | relative_url }})** | Aggregate the week's closed trades into win rate, expectancy, profit factor, R-multiple, and MAE/MFE, with win/loss pattern analysis by source skill, exit reason, thesis type, sector, and mechanism. Pure local calculation | <span class="badge badge-free">No API</span> |
@@ -291,5 +295,9 @@ A comprehensive catalog of all 61 Claude Trading Skills organized by category. B
 | Adversarial Trade Debate | -- | -- | -- |
 | Live Analytics Dashboard | -- | -- | -- |
 | Morning Note Briefing | -- | -- | -- |
+| Index Futures Weekly Income | -- | -- | -- |
+| Momentum Dca Bot | -- | -- | -- |
+| Trend Reclaim Screener | -- | -- | -- |
+| Swing Setup Screener | -- | -- | -- |
 
 "--" means not required. "Optional" means functionality is enhanced but the skill works without it.

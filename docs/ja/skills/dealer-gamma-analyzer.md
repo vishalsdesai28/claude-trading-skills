@@ -17,6 +17,7 @@ Quantify dealer options gamma (GEX) positioning for an equity or index from FREE
 
 <span class="badge badge-free">API不要</span>
 
+[スキルパッケージをダウンロード (.skill)](https://github.com/tradermonty/claude-trading-skills/raw/main/skill-packages/dealer-gamma-analyzer.skill){: .btn .btn-primary .fs-5 .mb-4 .mb-md-0 .mr-2 }
 [GitHubでソースを見る](https://github.com/tradermonty/claude-trading-skills/tree/main/skills/dealer-gamma-analyzer){: .btn .fs-5 .mb-4 .mb-md-0 }
 
 > **Note:** This page has not yet been translated into Japanese.

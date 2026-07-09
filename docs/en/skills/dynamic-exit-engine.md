@@ -17,6 +17,7 @@ Manage an adaptive trailing exit for an open LONG equity position. Use when the 
 
 <span class="badge badge-free">No API</span> <span class="badge badge-optional">FMP Optional</span>
 
+[Download Skill Package (.skill)](https://github.com/tradermonty/claude-trading-skills/raw/main/skill-packages/dynamic-exit-engine.skill){: .btn .btn-primary .fs-5 .mb-4 .mb-md-0 .mr-2 }
 [View Source on GitHub](https://github.com/tradermonty/claude-trading-skills/tree/main/skills/dynamic-exit-engine){: .btn .fs-5 .mb-4 .mb-md-0 }
 
 <details open markdown="block">

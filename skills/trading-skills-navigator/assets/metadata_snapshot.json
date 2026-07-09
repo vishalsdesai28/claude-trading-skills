@@ -453,6 +453,22 @@
       "timeframe": "daily"
     },
     {
+      "category": "swing-opportunity",
+      "difficulty": "intermediate",
+      "display_name": "Index Futures Weekly Income",
+      "id": "index-futures-weekly-income",
+      "integrations": [
+        {
+          "id": "yfinance",
+          "requirement": "required",
+          "type": "market_data"
+        }
+      ],
+      "status": "beta",
+      "summary": "Core-satellite ES/NQ system backtested on 25 years of Yahoo data - core leg holds above the 200d SMA with a hysteresis channel + 52-week-high crash brake (beats buy-and-hold at 1.5-2x futures leverage with ~half the drawdown); satellite legs are regime-gated weekly setups (long-only pullback/breakout, put-credit-spread income) with stand-aside calls in downtrends and stressed vol; plain-language trade plans hand off to position-sizer, technical-analyst, and trader-memory-core.",
+      "timeframe": "weekly"
+    },
+    {
       "category": "advanced-satellite",
       "difficulty": "intermediate",
       "display_name": "Institutional Flow Tracker",
@@ -651,6 +667,32 @@
       ],
       "status": "production",
       "summary": "Detects market top probability using O'Neil Distribution Days, Minervini Leading Stock Deterioration, and Monty Defensive Sector Rotation.",
+      "timeframe": "daily"
+    },
+    {
+      "category": "advanced-satellite",
+      "difficulty": "intermediate",
+      "display_name": "Momentum DCA Bot",
+      "id": "momentum-dca-bot",
+      "integrations": [
+        {
+          "id": "yfinance",
+          "requirement": "required",
+          "type": "market_data"
+        },
+        {
+          "id": "alpaca",
+          "requirement": "required",
+          "type": "broker"
+        },
+        {
+          "id": "finviz",
+          "requirement": "optional",
+          "type": "market_data"
+        }
+      ],
+      "status": "beta",
+      "summary": "Fully mechanical daily momentum DCA sleeve - screens momentum-pullback stocks (YTD +50%, above 20/50/200 SMA, weekly pullback, within 10% of 52-week high), buys a fixed $300 notional of the top-ranked name via Alpaca (paper by default) only while SPY closes above its 50DMA, books profits by selling half at +20%, and exits fully on a 50DMA break or 15% trailing stop; every action lands in an append-only trade log.",
       "timeframe": "daily"
     },
     {
@@ -1153,6 +1195,22 @@
       "timeframe": "research"
     },
     {
+      "category": "swing-opportunity",
+      "difficulty": "intermediate",
+      "display_name": "Swing Setup Screener",
+      "id": "swing-setup-screener",
+      "integrations": [
+        {
+          "id": "yfinance",
+          "requirement": "required",
+          "type": "market_data"
+        }
+      ],
+      "status": "beta",
+      "summary": "Seven-in-one after-hours screener over keyless Yahoo daily bars - swing-trend longs and shorts (SMA50/200 alignment with Pullback/Breakout/Extended or Bear-Flag/Breakdown/Oversold triggers), 52-week-high strength leaders with SMA20 pullback plans, high-ATR% volatility candidates, and three next-session RVOL watchlists (in-play movers, unusual-volume accumulation/distribution quadrant, weakness on selling volume); A-D grades from documented factor weights with a hard timing contract (last completed session only, RVOL screens explicitly labeled next-session watchlists) and hand-offs to position-sizer, technical-analyst, and short-squeeze-radar.",
+      "timeframe": "daily"
+    },
+    {
       "category": "trade-planning",
       "difficulty": "intermediate",
       "display_name": "Technical Analyst",
@@ -1273,6 +1331,22 @@
       "status": "production",
       "summary": "Recommend the right workflow, skillset, API profile, and setup path from a natural-language trading goal.",
       "timeframe": "research"
+    },
+    {
+      "category": "swing-opportunity",
+      "difficulty": "intermediate",
+      "display_name": "Trend Reclaim Screener",
+      "id": "trend-reclaim-screener",
+      "integrations": [
+        {
+          "id": "yfinance",
+          "requirement": "required",
+          "type": "market_data"
+        }
+      ],
+      "status": "beta",
+      "summary": "After-hours screener for long-side SMA50 reclaim setups - stocks that pulled back below the 50-day average, reset, and recently re-established above it; hard invalidations plus a 5-factor weighted grade (reclaim quality / momentum / structure / volume / trend alignment) rank top-3 picks with next-open entry, stop, and T1 plan levels that hand off to position-sizer, technical-analyst, and trader-memory-core.",
+      "timeframe": "daily"
     },
     {
       "category": "market-regime",

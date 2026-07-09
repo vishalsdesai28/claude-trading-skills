@@ -3,7 +3,7 @@ layout: default
 title: "Social Signal Ingestor"
 grand_parent: 日本語
 parent: スキルガイド
-nav_order: 58
+nav_order: 60
 lang_peer: /en/skills/social-signal-ingestor/
 permalink: /ja/skills/social-signal-ingestor/
 generated: true
@@ -17,6 +17,7 @@ Ingest trading signals from YouTube channels — fetch video transcripts via yt-
 
 <span class="badge badge-free">API不要</span>
 
+[スキルパッケージをダウンロード (.skill)](https://github.com/tradermonty/claude-trading-skills/raw/main/skill-packages/social-signal-ingestor.skill){: .btn .btn-primary .fs-5 .mb-4 .mb-md-0 .mr-2 }
 [GitHubでソースを見る](https://github.com/tradermonty/claude-trading-skills/tree/main/skills/social-signal-ingestor){: .btn .fs-5 .mb-4 .mb-md-0 }
 
 > **Note:** This page has not yet been translated into Japanese.

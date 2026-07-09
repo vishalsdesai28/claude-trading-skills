@@ -3,7 +3,7 @@ layout: default
 title: "Retail Sentiment Ingestor"
 grand_parent: English
 parent: Skill Guides
-nav_order: 49
+nav_order: 51
 lang_peer: /ja/skills/retail-sentiment-ingestor/
 permalink: /en/skills/retail-sentiment-ingestor/
 generated: true
@@ -17,6 +17,7 @@ Ingest real-time retail sentiment for a list of tickers from StockTwits cashtag 
 
 <span class="badge badge-free">No API</span>
 
+[Download Skill Package (.skill)](https://github.com/tradermonty/claude-trading-skills/raw/main/skill-packages/retail-sentiment-ingestor.skill){: .btn .btn-primary .fs-5 .mb-4 .mb-md-0 .mr-2 }
 [View Source on GitHub](https://github.com/tradermonty/claude-trading-skills/tree/main/skills/retail-sentiment-ingestor){: .btn .fs-5 .mb-4 .mb-md-0 }
 
 <details open markdown="block">

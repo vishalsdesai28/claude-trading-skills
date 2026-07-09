@@ -3,7 +3,7 @@ layout: default
 title: "Intrinsic Value Dcf"
 grand_parent: English
 parent: Skill Guides
-nav_order: 35
+nav_order: 36
 lang_peer: /ja/skills/intrinsic-value-dcf/
 permalink: /en/skills/intrinsic-value-dcf/
 generated: true
@@ -17,6 +17,7 @@ Produce a triangulated intrinsic-value estimate for a US ticker by blending a di
 
 <span class="badge badge-api">FMP Required</span>
 
+[Download Skill Package (.skill)](https://github.com/tradermonty/claude-trading-skills/raw/main/skill-packages/intrinsic-value-dcf.skill){: .btn .btn-primary .fs-5 .mb-4 .mb-md-0 .mr-2 }
 [View Source on GitHub](https://github.com/tradermonty/claude-trading-skills/tree/main/skills/intrinsic-value-dcf){: .btn .fs-5 .mb-4 .mb-md-0 }
 
 <details open markdown="block">

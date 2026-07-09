@@ -245,6 +245,7 @@ The table below is **auto-generated** from `skills-index.yaml` by `scripts/gener
 | **FTD Detector** | ✅ Required | ❌ Not used | ❌ Not used | Daily QQQ/SPY OHLCV via FMP |
 | **Finviz Screener** | ❌ Not used | 🟡 Optional | ❌ Not used | FINVIZ Elite API |
 | **IBD Distribution Day Monitor** | ✅ Required | ❌ Not used | ❌ Not used | Financial Modeling Prep API |
+| **Index Futures Weekly Income** | ❌ Not used | ❌ Not used | ❌ Not used | ES=F/NQ=F daily OHLCV and ^VIX/^VXN via yfinance (keyless); offline JSON fixture supported for signal generation |
 | **Institutional Flow Tracker** | ✅ Required | ❌ Not used | ❌ Not used | Financial Modeling Prep API |
 | **Intrinsic Value (DCF)** | ✅ Required | ❌ Not used | ❌ Not used | US fundamentals + live 10Y UST risk-free rate via FMP (primary data path) |
 | **Kanchi Dividend Review Monitor** | 🟡 Optional (Recommended) | ❌ Not used | ❌ Not used | Dividend / price monitoring via FMP |
@@ -256,6 +257,7 @@ The table below is **auto-generated** from `skills-index.yaml` by `scripts/gener
 | **Market Environment Analysis** | ❌ Not used | ❌ Not used | ❌ Not used | Global market data via WebSearch / WebFetch; Optional chart image inputs for technical interpretation |
 | **Market News Analyst** | ❌ Not used | ❌ Not used | ❌ Not used | Web search / fetch; Free GDELT 2.0 + public RSS coverage-surge catalyst detector (no API key); emits a news_blackout risk-gate signal via scripts/gdelt_catalyst.py |
 | **Market Top Detector** | ❌ Not used | ❌ Not used | ❌ Not used | Public market data CSVs; no API key required |
+| **Momentum DCA Bot** | ❌ Not used | 🟡 Optional | ✅ Required | Finviz Elite screener via --source finviz, or a manual screener CSV export via --csv |
 | **Morning Note Briefing** | ❌ Not used | ❌ Not used | ❌ Not used | Composition of existing skills (earnings-calendar, sector-analyst, economic-calendar-fetcher, market-news-analyst / gdelt-news-catalyst, plus a generic movers price feed); consumes their documented JSON outputs as input files; pure offline assembler (FMP only indirectly via the sub-skills) |
 | **Options Strategy Advisor** | 🟡 Optional | ❌ Not used | ❌ Not used | Financial Modeling Prep API |
 | **PEAD Screener** | ✅ Required | ❌ Not used | ❌ Not used | Financial Modeling Prep API |
@@ -280,6 +282,7 @@ The table below is **auto-generated** from `skills-index.yaml` by `scripts/gener
 | **Stockbee Momentum Burst Screener** | ✅ Required | ❌ Not used | ❌ Not used | Live US universe and daily OHLCV via Financial Modeling Prep |
 | **Stockbee Setup Fluency Trainer** | 🟡 Optional | ❌ Not used | ❌ Not used | Financial Modeling Prep daily OHLCV for automatic outcome updates when local prices are unavailable |
 | **Strategy Pivot Designer** | ❌ Not used | ❌ Not used | ❌ Not used | Pivot proposal generator; pure calculation |
+| **Swing Setup Screener** | ❌ Not used | ❌ Not used | ❌ Not used | Keyless Yahoo EquityQuery universe screen + ~1y daily OHLCV batch download; offline JSON fixture supported for testing |
 | **Technical Analyst** | ❌ Not used | ❌ Not used | ❌ Not used | Chart screenshot input |
 | **Theme Detector** | 🟡 Optional | 🟡 Optional (Recommended) | ❌ Not used | Financial Modeling Prep API |
 | **Ticker Enricher** | ❌ Not used | ❌ Not used | ❌ Not used | Company metadata + recommendation/current prices via yfinance; Record shaping + gain/age computation run locally |
@@ -287,6 +290,7 @@ The table below is **auto-generated** from `skills-index.yaml` by `scripts/gener
 | **Trade Performance Coach** | ❌ Not used | ❌ Not used | ❌ Not used | Works from local trader-memory / postmortem / journal records; no network or paid API required |
 | **Trader Memory Core** | 🟡 Optional | ❌ Not used | ❌ Not used | FMP optional for MAE/MFE and the alpha benchmark (SPY); reflection log and past-context are offline |
 | **Trading Skills Navigator** | ❌ Not used | ❌ Not used | ❌ Not used | Reads local skills-index.yaml + workflows/*.yaml (or bundled snapshot); no network |
+| **Trend Reclaim Screener** | ❌ Not used | ❌ Not used | ❌ Not used | Keyless Yahoo EquityQuery universe screen + ~1y daily OHLCV batch download; offline JSON fixture supported for testing |
 | **US Market Bubble Detector** | ❌ Not used | ❌ Not used | ❌ Not used | User provides indicators |
 | **US Stock Analysis** | ❌ Not used | ❌ Not used | ❌ Not used | User provides data |
 | **Uptrend Analyzer** | ❌ Not used | ❌ Not used | ❌ Not used | Monty Uptrend Ratio Dashboard CSV; no API key required |

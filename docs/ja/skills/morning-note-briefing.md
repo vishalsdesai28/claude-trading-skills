@@ -3,7 +3,7 @@ layout: default
 title: "Morning Note Briefing"
 grand_parent: 日本語
 parent: スキルガイド
-nav_order: 43
+nav_order: 45
 lang_peer: /en/skills/morning-note-briefing/
 permalink: /ja/skills/morning-note-briefing/
 generated: true
@@ -17,6 +17,7 @@ Assemble a fixed-format, two-minute pre-market morning note by composing the JSO
 
 <span class="badge badge-free">API不要</span>
 
+[スキルパッケージをダウンロード (.skill)](https://github.com/tradermonty/claude-trading-skills/raw/main/skill-packages/morning-note-briefing.skill){: .btn .btn-primary .fs-5 .mb-4 .mb-md-0 .mr-2 }
 [GitHubでソースを見る](https://github.com/tradermonty/claude-trading-skills/tree/main/skills/morning-note-briefing){: .btn .fs-5 .mb-4 .mb-md-0 }
 
 > **Note:** This page has not yet been translated into Japanese.

@@ -3,7 +3,7 @@ layout: default
 title: "Robinhood Trade Executor"
 grand_parent: English
 parent: Skill Guides
-nav_order: 50
+nav_order: 52
 lang_peer: /ja/skills/robinhood-trade-executor/
 permalink: /en/skills/robinhood-trade-executor/
 generated: true
@@ -17,6 +17,7 @@ Auto-buy newly surfaced long-stock signals on Robinhood. Reads social-signal-ing
 
 <span class="badge badge-free">No API</span>
 
+[Download Skill Package (.skill)](https://github.com/tradermonty/claude-trading-skills/raw/main/skill-packages/robinhood-trade-executor.skill){: .btn .btn-primary .fs-5 .mb-4 .mb-md-0 .mr-2 }
 [View Source on GitHub](https://github.com/tradermonty/claude-trading-skills/tree/main/skills/robinhood-trade-executor){: .btn .fs-5 .mb-4 .mb-md-0 }
 
 <details open markdown="block">
