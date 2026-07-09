@@ -556,6 +556,30 @@ skills:
   outputs:
   - distribution_day_count_report
   workflows: []
+- id: index-futures-weekly-income
+  display_name: Index Futures Weekly Income
+  category: swing-opportunity
+  status: beta
+  summary: Core-satellite ES/NQ system backtested on 25 years of Yahoo data - core leg holds above the
+    200d SMA with a hysteresis channel + 52-week-high crash brake (beats buy-and-hold at 1.5-2x futures
+    leverage with ~half the drawdown); satellite legs are regime-gated weekly setups (long-only pullback/breakout,
+    put-credit-spread income) with stand-aside calls in downtrends and stressed vol; plain-language trade
+    plans hand off to position-sizer, technical-analyst, and trader-memory-core.
+  timeframe: weekly
+  difficulty: intermediate
+  integrations:
+  - id: yfinance
+    type: market_data
+    requirement: required
+    note: ES=F/NQ=F daily OHLCV and ^VIX/^VXN via yfinance (keyless); offline JSON fixture supported
+      for signal generation
+  inputs:
+  - es_nq_ohlcv
+  - vix_vxn_level
+  outputs:
+  - weekly_futures_signal_report
+  - futures_backtest_report
+  workflows: []
 - id: institutional-flow-tracker
   display_name: Institutional Flow Tracker
   category: advanced-satellite
@@ -793,6 +817,35 @@ skills:
   - market_top_composite_score
   workflows:
   - market-regime-daily
+- id: momentum-dca-bot
+  display_name: Momentum DCA Bot
+  category: advanced-satellite
+  status: beta
+  summary: Fully mechanical daily momentum DCA sleeve - screens momentum-pullback stocks (YTD +50%,
+    above 20/50/200 SMA, weekly pullback, within 10% of 52-week high), buys a fixed $300 notional of
+    the top-ranked name via Alpaca (paper by default) only while SPY closes above its 50DMA, books
+    profits by selling half at +20%, and exits fully on a 50DMA break or 15% trailing stop; every
+    action lands in an append-only trade log.
+  timeframe: daily
+  difficulty: intermediate
+  integrations:
+  - id: yfinance
+    type: market_data
+    requirement: required
+    note: Keyless Yahoo screener, SPY regime gate, and daily exit bars
+  - id: alpaca
+    type: broker
+    requirement: required
+    note: Order placement (paper unless ALPACA_PAPER=false); scan and --dry-run work without keys
+  - id: finviz
+    type: market_data
+    requirement: optional
+    note: Finviz Elite screener via --source finviz, or a manual screener CSV export via --csv
+  inputs:
+  - us_equity_ohlcv
+  outputs:
+  - momentum_dca_trade_log
+  workflows: []
 - id: morning-note-briefing
   display_name: Morning Note Briefing
   category: market-regime
@@ -1391,6 +1444,30 @@ skills:
   outputs:
   - pivot_proposals
   workflows: []
+- id: swing-setup-screener
+  display_name: Swing Setup Screener
+  category: swing-opportunity
+  status: beta
+  summary: Seven-in-one after-hours screener over keyless Yahoo daily bars - swing-trend longs and shorts
+    (SMA50/200 alignment with Pullback/Breakout/Extended or Bear-Flag/Breakdown/Oversold triggers),
+    52-week-high strength leaders with SMA20 pullback plans, high-ATR% volatility candidates, and three
+    next-session RVOL watchlists (in-play movers, unusual-volume accumulation/distribution quadrant,
+    weakness on selling volume); A-D grades from documented factor weights with a hard timing contract
+    (last completed session only, RVOL screens explicitly labeled next-session watchlists) and
+    hand-offs to position-sizer, technical-analyst, and short-squeeze-radar.
+  timeframe: daily
+  difficulty: intermediate
+  integrations:
+  - id: yfinance
+    type: market_data
+    requirement: required
+    note: Keyless Yahoo EquityQuery universe screen + ~1y daily OHLCV batch download; offline JSON
+      fixture supported for testing
+  inputs:
+  - us_equity_ohlcv
+  outputs:
+  - swing_setup_watchlist_report
+  workflows: []
 - id: technical-analyst
   display_name: Technical Analyst
   category: trade-planning
@@ -1550,6 +1627,28 @@ skills:
   - workflow_recommendation
   - skillset_recommendation
   - setup_path
+  workflows: []
+- id: trend-reclaim-screener
+  display_name: Trend Reclaim Screener
+  category: swing-opportunity
+  status: beta
+  summary: After-hours screener for long-side SMA50 reclaim setups - stocks that pulled back below
+    the 50-day average, reset, and recently re-established above it; hard invalidations plus a 5-factor
+    weighted grade (reclaim quality / momentum / structure / volume / trend alignment) rank top-3 picks
+    with next-open entry, stop, and T1 plan levels that hand off to position-sizer, technical-analyst,
+    and trader-memory-core.
+  timeframe: daily
+  difficulty: intermediate
+  integrations:
+  - id: yfinance
+    type: market_data
+    requirement: required
+    note: Keyless Yahoo EquityQuery universe screen + ~1y daily OHLCV batch download; offline JSON
+      fixture supported for testing
+  inputs:
+  - us_equity_ohlcv
+  outputs:
+  - trend_reclaim_watchlist_report
   workflows: []
 - id: uptrend-analyzer
   display_name: Uptrend Analyzer

@@ -3,7 +3,7 @@ layout: default
 title: "Ticker Enricher"
 grand_parent: English
 parent: Skill Guides
-nav_order: 67
+nav_order: 70
 lang_peer: /ja/skills/ticker-enricher/
 permalink: /en/skills/ticker-enricher/
 generated: true
@@ -17,6 +17,7 @@ Enrich ticker signals with company metadata (name, sector, industry) and prices 
 
 <span class="badge badge-free">No API</span>
 
+[Download Skill Package (.skill)](https://github.com/tradermonty/claude-trading-skills/raw/main/skill-packages/ticker-enricher.skill){: .btn .btn-primary .fs-5 .mb-4 .mb-md-0 .mr-2 }
 [View Source on GitHub](https://github.com/tradermonty/claude-trading-skills/tree/main/skills/ticker-enricher){: .btn .fs-5 .mb-4 .mb-md-0 }
 
 <details open markdown="block">

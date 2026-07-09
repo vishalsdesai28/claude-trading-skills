@@ -17,6 +17,7 @@ Turn a screener candidate into a decisive conviction rating and a sized, risk-ve
 
 <span class="badge badge-free">API不要</span>
 
+[スキルパッケージをダウンロード (.skill)](https://github.com/tradermonty/claude-trading-skills/raw/main/skill-packages/adversarial-trade-debate.skill){: .btn .btn-primary .fs-5 .mb-4 .mb-md-0 .mr-2 }
 [GitHubでソースを見る](https://github.com/tradermonty/claude-trading-skills/tree/main/skills/adversarial-trade-debate){: .btn .fs-5 .mb-4 .mb-md-0 }
 
 > **Note:** This page has not yet been translated into Japanese.

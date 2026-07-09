@@ -51,3 +51,7 @@ data/
 htmlcov/
 .coverage
 # .secrets.baseline is tracked — needed by detect-secrets pre-commit hook
+
+
+# Internal-only files (not for public repo)
+internal/
